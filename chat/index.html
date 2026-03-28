@@ -1,0 +1,4293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yumiko Chat</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/favicon.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/favicon.png">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;700&display=swap');
+
+    :root {
+      --primary-black: #000000;
+      --primary-white: #ffffff;
+      --text-gray: #f0f0f0;
+      --accent-gray: #333333;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      margin: 0;
+      overflow-x: hidden;
+      height: 100%;
+      background: var(--primary-black);
+      font-family: 'Work Sans', sans-serif;
+      color: var(--primary-white);
+    }
+
+    /* Parallax container */
+    .parallax-container {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 3D model container */
+    .model-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      z-index: 1;
+    }
+
+    .loader {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      color: var(--text-gray);
+      z-index: 10;
+    }
+
+    canvas {
+      display: block;
+      margin-top:-2%;
+      width: 100%;
+      height: 100%;
+    }
+
+  </style>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', 'Space Grotesk', sans-serif;
+        color: #111;
+        min-height: 100vh;
+        overflow: hidden;
+        position: relative;
+        background-color: black;
+    }
+
+    /* 3D character placeholder area - unchanged */
+    .character-area {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1;
+        pointer-events: auto;
+    }
+
+    /* Chat interface container - added gradient overlay */
+    .chat-interface {
+        position: fixed;
+        bottom: 30px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+    }
+
+    /* Chat window - refined with shadows and better geometry */
+    .chat-window-container {
+        width: 100%;
+        max-width: 920px;
+        margin-bottom: 20px;
+        clip-path: polygon(
+            0 15px,
+            15px 0,
+            calc(100% - 40px) 0,
+            100% 40px,
+            100% calc(100% - 15px),
+            calc(100% - 15px) 100%,
+            40px 100%,
+            0 calc(100% - 40px)
+        );
+        background-color: rgba(251, 251, 251, 0.0);
+        padding: 2px;
+        transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 70vh;
+        opacity: 1;
+        transform: translateY(0);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .chat-window-inner {
+        width: 100%;
+        height: 100%;
+        background-color: rgba(251, 251, 251, 0.0);
+        clip-path: polygon(
+            0 13px,
+            13px 0,
+            calc(100% - 38px) 0,
+            100% 38px,
+            100% calc(100% - 13px),
+            calc(100% - 13px) 100%,
+            38px 100%,
+            0 calc(100% - 38px)
+        );
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-window {
+        flex: 1;
+        overflow-y: auto;
+        padding: 28px; /* Increased padding */
+        display: flex;
+        flex-direction: column;
+        gap: 24px; /* Increased gap */
+        max-height: calc(70vh - 50px);
+        scroll-behavior: smooth;
+        background-color: rgba(251, 251, 251, 0.2);
+    }
+
+    .chat-window::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .chat-window::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-window::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 2.5px;
+    }
+
+    /* Message styles - more refined with better typography */
+    .message {
+        max-width: 95%;
+        width: auto;
+        padding: 18px 22px;
+        border-radius: 2px;
+        font-size: 15px;
+        line-height: 1.6;
+        position: relative;
+        margin-bottom: 4px;
+        display: inline-block;
+        letter-spacing: 0.2px;
+    }
+
+    .message::before {
+        content: '';
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: inherit;
+        top: 0;
+    }
+
+    .user-message {
+        align-self: flex-end;
+        background: linear-gradient(135deg, #000000, #222222);
+        color: white;
+        clip-path: polygon(
+            0 0,
+            calc(100% - 10px) 0,
+            100% 10px,
+            100% 100%,
+            10px 100%,
+            0 calc(100% - 10px)
+        );
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        font-weight: 400;
+    }
+
+    .ai-message {
+        align-self: flex-start;
+        background: linear-gradient(135deg, #f0f0f0, #e4e4e4);
+        color: #000;
+        clip-path: polygon(
+            0 10px,
+            10px 0,
+            100% 0,
+            100% calc(100% - 10px),
+            calc(100% - 10px) 100%,
+            0 100%
+        );
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        font-weight: 400;
+    }
+
+    /* Chat header - sleeker design */
+    .chat-header {
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        background-color: rgba(251, 251, 251, 0.8);
+    }
+
+    .chat-title {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #222;
+    }
+
+    .chat-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        transition: transform 0.3s ease;
+        opacity: 0.6;
+    }
+
+    .chat-toggle:hover {
+        opacity: 1;
+    }
+
+    .tech-label {
+        font-size: 11px;
+        position: absolute;
+        top: 8px;
+        right: 50px;
+        color: rgba(0, 0, 0, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-weight: 500;
+    }
+
+    /* Tech elements for chat window - enhanced */
+    .window-tech-element {
+        position: absolute;
+        background: linear-gradient(90deg, #000, #333);
+    }
+
+    .wte-1 {
+        top: 0;
+        left: 50px;
+        width: 45px;
+        height: 2px;
+    }
+
+    .wte-2 {
+        bottom: 0;
+        right: 60px;
+        width: 35px;
+        height: 2px;
+    }
+
+    .pixel-group {
+        position: absolute;
+        display: flex;
+    }
+
+    .window-pixel-top {
+        top: 10px;
+        right: 100px;
+    }
+
+    .window-pixel-bottom {
+        bottom: 10px;
+        left: 80px;
+    }
+
+    .w-pixel {
+        width: 3px;
+        height: 3px;
+        background-color: black;
+        margin: 1.5px;
+    }
+
+    /* Message container - better spacing */
+    .message-container {
+        display: flex;
+        flex-direction: column;
+        max-width: 95%;
+        align-self: flex-end;
+        margin-bottom: 20px; /* Increased space */
+        width: auto;
+    }
+
+    .message-container.ai {
+        align-self: flex-start;
+    }
+
+    /* Message timestamp - more elegant */
+    .message-time {
+        font-size: 11px;
+        margin-top: 8px; /* More space */
+        opacity: 0.7;
+        align-self: flex-end;
+        padding: 0 5px;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+    }
+
+    .ai-message .message-time {
+        align-self: flex-start;
+    }
+
+    /* Chat input - premium feel */
+    .chat-input-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 720px;
+        clip-path: polygon(
+            0 12px,
+            12px 0,
+            calc(100% - 36px) 0,
+            100% 36px,
+            100% calc(100% - 12px),
+            calc(100% - 12px) 100%,
+            36px 100%,
+            0 calc(100% - 36px)
+        );
+        background: linear-gradient(135deg, #000000, #333333);
+        padding: 2px;
+        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
+        transition: transform 0.3s ease, filter 0.3s ease;
+    }
+
+    .chat-input-wrapper:hover {
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+        transform: translateY(-2px);
+    }
+
+    .chat-input-inner {
+        width: 100%;
+        background-color: white;
+        clip-path: polygon(
+            0 10px,
+            10px 0,
+            calc(100% - 34px) 0,
+            100% 34px,
+            100% calc(100% - 10px),
+            calc(100% - 10px) 100%,
+            34px 100%,
+            0 calc(100% - 34px)
+        );
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(to bottom, #ffffff, #f9f9f9);
+    }
+
+    .chat-form {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 18px 26px;
+    }
+
+    .chat-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        font-size: 15px;
+        font-weight: 400;
+        outline: none;
+        padding: 10px 0;
+        margin-right: 15px;
+        font-family: 'Inter', 'Space Grotesk', sans-serif;
+        color: #333;
+        letter-spacing: 0.3px;
+    }
+
+    .chat-input::placeholder {
+        color: #aaa;
+        font-weight: 300;
+        transition: opacity 0.3s ease;
+        letter-spacing: 0.3px;
+    }
+
+    .chat-input:focus::placeholder {
+        opacity: 0.4;
+    }
+
+    .chat-submit {
+        background: linear-gradient(135deg, #000000, #333333);
+        color: white;
+        border: none;
+        height: 44px;
+        width: 44px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        clip-path: polygon(
+            0 0,
+            100% 0,
+            100% 70%,
+            70% 100%,
+            0 100%
+        );
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-submit:hover {
+        transform: scale(1.05);
+        background: linear-gradient(135deg, #111111, #444444);
+    }
+
+    /* Focus indicator - more elegant */
+    .focus-line {
+        position: absolute;
+        bottom: 14px;
+        left: 26px;
+        height: 1.5px;
+        width: 0;
+        background: linear-gradient(to right, #000, #333);
+        transition: width 0.4s ease;
+    }
+
+    .chat-input:focus ~ .focus-line {
+        width: calc(100% - 100px);
+    }
+
+    /* Tech elements - enhanced */
+    .tech-element {
+        position: absolute;
+        background: linear-gradient(90deg, #000, #333);
+    }
+
+    .te-1 {
+        top: 0;
+        left: 40px;
+        width: 35px;
+        height: 2px;
+    }
+
+    .te-2 {
+        bottom: 0;
+        right: 50px;
+        width: 25px;
+        height: 2px;
+    }
+
+    /* Pixel pattern - more refined */
+    .pixel-pattern {
+        position: absolute;
+        display: flex;
+    }
+
+    .pixel-pattern-right {
+        top: 6px;
+        right: 60px;
+    }
+
+    .pixel {
+        width: 3px;
+        height: 3px;
+        background-color: black;
+        margin: 1.5px;
+    }
+
+    /* Collapsed state */
+    .chat-window-container.collapsed {
+        max-height: 0;
+        margin-bottom: 0;
+        opacity: 0;
+        transform: translateY(-20px);
+        pointer-events: none;
+    }
+
+    /* Expand/collapse indicator - more premium */
+    .expand-collapse-indicator {
+        position: absolute;
+        top: -9px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 64px;
+        height: 20px;
+        background: linear-gradient(135deg, #000000, #333333);
+        z-index: 10;
+        clip-path: polygon(
+            5px 0,
+            calc(100% - 5px) 0,
+            100% 5px,
+            100% 100%,
+            0 100%,
+            0 5px
+        );
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: transform 0.3s ease, background 0.3s ease;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .expand-collapse-indicator:hover {
+        transform: translateX(-50%) scale(1.05);
+        background: linear-gradient(135deg, #111111, #444444);
+    }
+
+    .expand-collapse-indicator svg {
+        fill: white;
+        width: 14px;
+        height: 14px;
+        transition: transform 0.3s ease;
+    }
+
+    .collapsed + .expand-collapse-indicator svg {
+        transform: rotate(180deg);
+    }
+
+    /* Status indicator - enhanced */
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        border-radius: 50%;
+        margin-right: 10px;
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+    }
+
+    .chat-status {
+        display: flex;
+        align-items: center;
+    }
+
+    .status-text {
+        font-size: 13px;
+        color: rgba(0, 0, 0, 0.7);
+        letter-spacing: 0.3px;
+        font-weight: 500;
+    }
+
+    /* Typing indicator - smoother animation */
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 16px 20px;
+        align-self: flex-start;
+        clip-path: polygon(
+            0 10px,
+            10px 0,
+            100% 0,
+            100% calc(100% - 10px),
+            calc(100% - 10px) 100%,
+            0 100%
+        );
+        background: linear-gradient(135deg, #f0f0f0, #e4e4e4);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .typing-indicator.active {
+        opacity: 1;
+    }
+
+    .typing-dot {
+        width: 6px;
+        height: 6px;
+        background-color: #555;
+        border-radius: 50%;
+        animation: typingAnimation 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(1) {
+        animation-delay: 0s;
+    }
+
+    .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes typingAnimation {
+        0%, 100% {
+            transform: translateY(0);
+            opacity: 0.8;
+        }
+        50% {
+            transform: translateY(-5px);
+            opacity: 1;
+        }
+    }
+
+    /* Text Scramble Effect Styles */
+    .dud {
+        color: #757575;
+        display: inline-block;
+        position: relative;
+        animation: glitch 50ms infinite;
+    }
+
+    @keyframes glitch {
+        0% { transform: translate(0); }
+        20% { transform: translate(-1px, 1px); }
+        40% { transform: translate(-1px, -1px); }
+        60% { transform: translate(1px, 1px); }
+        80% { transform: translate(1px, -1px); }
+        100% { transform: translate(0); }
+    }
+
+    /* Voice Settings Container */
+    .voice-settings-container {
+        position: absolute;
+        top: 16px;
+        right: 60px;
+        z-index: 100;
+    }
+
+    /* Voice Settings Button - Matches your existing UI style */
+    .voice-settings-button {
+        background: linear-gradient(135deg, #111111, #333333);
+        border: none;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.7);
+        transition: all 0.3s ease;
+        clip-path: polygon(
+            0 8px,
+            8px 0,
+            100% 0,
+            100% calc(100% - 8px),
+            calc(100% - 8px) 100%,
+            0 100%
+        );
+    }
+
+    .voice-settings-button:hover {
+        transform: scale(1.05);
+        color: white;
+    }
+
+    .voice-settings-button.active {
+        background: linear-gradient(135deg, #000000, #222222);
+        color: white;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Voice Settings Dropdown */
+    .voice-settings-dropdown {
+        position: absolute;
+        top: 40px;
+        right: 0;
+        width: 200px;
+        background: linear-gradient(135deg, #f0f0f0, #e4e4e4);
+        clip-path: polygon(
+            0 10px,
+            10px 0,
+            100% 0,
+            100% calc(100% - 10px),
+            calc(100% - 10px) 100%,
+            0 100%
+        );
+        opacity: 0;
+        transform: translateY(-10px);
+        visibility: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .voice-settings-dropdown.show {
+        opacity: 1;
+        transform: translateY(0);
+        visibility: visible;
+    }
+
+    /* Voice Settings Header */
+    .voice-settings-header {
+        padding: 12px 15px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #222;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        letter-spacing: 0.5px;
+    }
+
+    /* Voice Settings Options */
+    .voice-settings-option {
+        padding: 12px 15px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .voice-settings-option:last-child {
+        border-bottom: none;
+    }
+
+    /* Toggle Switch */
+    .voice-toggle-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .voice-toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 22px;
+    }
+
+    .voice-toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .voice-toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 22px;
+    }
+
+    .voice-toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .voice-toggle-slider {
+        background: linear-gradient(135deg, #000000, #333333);
+    }
+
+    input:checked + .voice-toggle-slider:before {
+        transform: translateX(18px);
+    }
+
+    /* Volume Slider */
+    .voice-volume-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .voice-volume-slider {
+        margin-left: 10px;
+        width: 100px;
+        height: 5px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: #ddd;
+        outline: none;
+        border-radius: 3px;
+    }
+
+    .voice-volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: #000;
+        cursor: pointer;
+    }
+
+    .voice-volume-slider::-moz-range-thumb {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: #000;
+        cursor: pointer;
+        border: none;
+    }
+
+    /* Input locking styles - add to your existing CSS */
+    /* Disabled input state */
+    .chat-input:disabled {
+        color: #999;
+        font-style: italic;
+    }
+
+    .chat-submit.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: linear-gradient(135deg, #666666, #999999);
+    }
+
+    /* Input lock overlay */
+    .input-lock-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 5;
+        pointer-events: none;
+        backdrop-filter: blur(2px);
+        clip-path: polygon(
+            0 10px,
+            10px 0,
+            calc(100% - 34px) 0,
+            100% 34px,
+            100% calc(100% - 10px),
+            calc(100% - 10px) 100%,
+            34px 100%,
+            0 calc(100% - 34px)
+        );
+    }
+
+    .input-lock-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .lock-text {
+        font-size: 14px;
+        font-weight: 500;
+        margin-left: 8px;
+        color: #333;
+        letter-spacing: 0.3px;
+    }
+
+    .lock-icon {
+        color: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.7;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    /* Style for speaking messages */
+    .message.speaking {
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 0 8px rgba(0,0,0,0.15);
+        position: relative;
+    }
+
+    .message.speaking::after {
+        content: "";
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        width: 8px;
+        height: 8px;
+        background-color: #000;
+        border-radius: 50%;
+        animation: speak-pulse 0.8s infinite alternate;
+    }
+
+    @keyframes speak-pulse {
+        0% {
+            transform: scale(0.8);
+            opacity: 0.6;
+        }
+        100% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+    }
+
+    /* Back Button Styles */
+    .back-button-container {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 100;
+    }
+
+    .back-button {
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background-color: rgba(251, 251, 251, 0.7);
+        transition: all 0.3s ease;
+        clip-path: polygon(
+            0 8px,
+            8px 0,
+            100% 0,
+            100% calc(100% - 8px),
+            calc(100% - 8px) 100%,
+            0 100%
+        );
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .back-button:hover {
+        transform: translateX(-3px);
+        background: #f8f8f8;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .back-button svg {
+        margin-right: 6px;
+    }
+
+    .back-button-text {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+
+    /* Content Toggle Styles */
+    /* Content switcher container */
+    .content-toggle-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 100;
+    }
+
+    /* Background video styling */
+    .background-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 1;
+        display: none; /* Hidden by default */
+    }
+
+    /* Toggle button container */
+    .content-toggle {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: transform 0.4s cubic-bezier(0.65, 0.05, 0.36, 1);
+    }
+
+    .content-toggle:hover {
+        transform: scale(1.05);
+    }
+
+    .content-toggle:active {
+        transform: scale(0.95);
+        transition: transform 0.2s cubic-bezier(0.65, 0.05, 0.36, 1);
+    }
+
+    /* The toggle button */
+    .content-toggle__button {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.5s cubic-bezier(0.65, 0.05, 0.36, 1);
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
+                    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .content-toggle__button:before {
+        content: '';
+        position: absolute;
+        inset: 1px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+        z-index: 0;
+        opacity: 0;
+        transition: opacity 0.5s cubic-bezier(0.65, 0.05, 0.36, 1);
+    }
+
+    .content-toggle:hover .content-toggle__button {
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
+                    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .content-toggle:hover .content-toggle__button:before {
+        opacity: 1;
+    }
+
+    .content-toggle.active .content-toggle__button {
+        border-color: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
+                    0 0 0 1px rgba(255, 255, 255, 0.1),
+                    0 0 20px rgba(255, 255, 255, 0.1);
+    }
+
+    /* Waves animation */
+    .content-toggle__waves {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .content-toggle__wave {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+
+    .content-toggle.active .content-toggle__wave {
+        animation: wave-out 3.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+
+    .content-toggle__wave:nth-child(2) {
+        animation-delay: 0.5s;
+    }
+
+    .content-toggle__wave:nth-child(3) {
+        animation-delay: 1s;
+    }
+
+    /* Label styling */
+    .content-toggle__label {
+        position: absolute;
+        bottom: -34px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-transform: uppercase;
+        font-size: 0.625rem;
+        font-weight: 300;
+        letter-spacing: 0.15em;
+        opacity: 0;
+        transition: all 0.4s ease;
+        white-space: nowrap;
+        padding: 0.4em 1em;
+        background-color: rgba(0, 0, 0, 0.8);
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        color: white;
+    }
+
+    .content-toggle:hover .content-toggle__label {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-4px);
+    }
+
+    /* Icon styling */
+    .content-toggle__icon {
+        position: relative;
+        z-index: 2;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .content-toggle:hover .content-toggle__icon {
+        transform: scale(1.1);
+    }
+
+    .content-toggle__icon-video,
+    .content-toggle__icon-3d {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.6s cubic-bezier(0.19, 1, 0.22, 1),
+                    transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    .content-toggle__icon-video {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+    }
+
+    .content-toggle.active .content-toggle__icon-video {
+        opacity: 0;
+        transform: translateY(10px) rotate(-10deg);
+    }
+
+    .content-toggle__icon-3d {
+        opacity: 0;
+        transform: translateY(-10px) rotate(10deg);
+    }
+
+    .content-toggle.active .content-toggle__icon-3d {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+    }
+
+    /* Wave animation keyframes */
+    @keyframes wave-out {
+        0% {
+            transform: translate(-50%, -50%) scale(0.3);
+            opacity: 0.9;
+            border-width: 2px;
+        }
+        40% {
+            opacity: 0.5;
+            border-width: 1px;
+        }
+        100% {
+            transform: translate(-50%, -50%) scale(2.5);
+            opacity: 0;
+            border-width: 0.5px;
+        }
+    }
+
+    /* Pulse animation for 3D mode */
+    @keyframes pulse-subtle {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 0.8;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    /* Mobile responsiveness styles */
+    @media (max-width: 768px) {
+        .chat-window-container,
+        .chat-input-wrapper {
+            max-width: 100%;
+            margin-left: 15px;
+            margin-right: 15px;
+        }
+
+        .chat-window-container {
+            max-height: 75vh;
+        }
+
+        .chat-window {
+            max-height: calc(75vh - 50px);
+            padding: 22px;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 95%;
+            font-size: 14px;
+            padding: 14px 18px;
+            width: auto;
+        }
+
+        .message-container {
+            margin-bottom: 14px;
+        }
+
+        .chat-form {
+            padding: 14px 20px;
+        }
+
+        .chat-header {
+            padding: 12px 18px;
+        }
+
+        .chat-interface {
+            bottom: 15px;
+        }
+
+        /* Make toggle more tappable on mobile */
+        .expand-collapse-indicator {
+            width: 74px;
+            height: 24px;
+        }
+
+        .expand-collapse-indicator svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .chat-submit {
+            height: 46px;
+            width: 46px;
+        }
+
+        .content-toggle-container {
+            top: 15px;
+            right: 15px;
+        }
+
+        .content-toggle__button {
+            width: 48px;
+            height: 48px;
+        }
+
+        .content-toggle__icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .input-lock-overlay {
+            clip-path: polygon(
+                0 8px,
+                8px 0,
+                calc(100% - 30px) 0,
+                100% 30px,
+                100% calc(100% - 8px),
+                calc(100% - 8px) 100%,
+                30px 100%,
+                0 calc(100% - 30px)
+            );
+        }
+
+        .lock-text {
+            font-size: 13px;
+        }
+
+        .voice-settings-container {
+            right: 50px;
+            top: 14px;
+        }
+
+        .voice-settings-button {
+            width: 28px;
+            height: 28px;
+        }
+
+        .voice-settings-dropdown {
+            top: 35px;
+            width: 180px;
+        }
+
+        .back-button-container {
+            top: 15px;
+            left: 15px;
+        }
+
+        .back-button {
+            padding: 8px 12px;
+        }
+
+        .back-button-text {
+            font-size: 13px;
+        }
+    }
+
+    /* EXTRA SMALL SCREENS */
+    @media (max-width: 480px) {
+        .chat-window-container {
+            max-height: 80vh;
+        }
+
+        .chat-window {
+            max-height: calc(80vh - 50px);
+            padding: 18px;
+            gap: 14px;
+        }
+
+        .message {
+            max-width: 98%;
+            padding: 14px 16px;
+        }
+
+        .message-container {
+            margin-bottom: 12px;
+        }
+
+        .tech-label {
+            font-size: 9px; /* Smaller but still visible */
+            right: 46px;
+        }
+
+        .chat-title {
+            font-size: 12px;
+        }
+
+        .chat-interface {
+            bottom: 10px;
+        }
+
+        .content-toggle-container {
+            top: 10px;
+            right: 10px;
+        }
+
+        .content-toggle__button {
+            width: 40px;
+            height: 40px;
+        }
+
+        .content-toggle__icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .input-lock-overlay {
+            padding: 0 10px;
+        }
+
+        .lock-text {
+            font-size: 12px;
+        }
+
+        .voice-settings-container {
+            right: 45px;
+            top: 12px;
+        }
+
+        .voice-settings-button {
+            width: 26px;
+            height: 26px;
+        }
+
+        .voice-settings-dropdown {
+            width: 160px;
+        }
+
+        .back-button-container {
+            top: 10px;
+            left: 10px;
+        }
+
+        .back-button {
+            padding: 6px 10px;
+        }
+
+        .back-button-text {
+            font-size: 12px;
+        }
+    }
+
+    /* LANDSCAPE MODE ADJUSTMENTS */
+    @media (max-height: 500px) and (orientation: landscape) {
+        .chat-window-container {
+            max-height: 65vh;
+        }
+
+        .chat-window {
+            max-height: calc(65vh - 40px);
+        }
+
+        .chat-header {
+            padding: 10px 15px;
+        }
+
+        .chat-interface {
+            bottom: 10px;
+        }
+    }
+    </style>
+    <!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- GLTF Loader -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<!-- DRACO Loader for compressed models -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.82/build/spline-viewer.js"></script>
+</head>
+<body>
+    <!-- Back Button -->
+    <div class="back-button-container">
+        <button id="backButton" class="back-button" aria-label="Go Back">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <span class="back-button-text">Back</span>
+        </button>
+    </div>
+
+    <!-- Content Toggle Button -->
+    <div class="content-toggle-container">
+        <div class="content-toggle">
+            <div class="content-toggle__button">
+                <div class="content-toggle__waves">
+                    <div class="content-toggle__wave"></div>
+                    <div class="content-toggle__wave"></div>
+                    <div class="content-toggle__wave"></div>
+                </div>
+                <div class="content-toggle__icon">
+                    <div class="content-toggle__icon-video">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 8V16C4 17.1046 4.89543 18 6 18H14C15.1046 18 16 17.1046 16 16V8C16 6.89543 15.1046 6 14 6H6C4.89543 6 4 6.89543 4 8Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16 10L20 7V17L16 14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="content-toggle__icon-3d">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 3L20 7.5V16.5L12 21L4 16.5V7.5L12 3Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 12L20 7.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 12V21" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 12L4 7.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="content-toggle__label">Video Mode</div>
+        </div>
+    </div>
+
+    <!-- Placeholder for 3D character background -->
+    <div class="character-area">
+        <!-- Video background -->
+        <div id="fallback-video" class="background-video viewport-autoplay" muted playsinline>
+            <div class="parallax-container">
+  <!-- 3D Model Background -->
+  <div class="model-container">
+    <div class="loader" id="js-loader">Loading 3D Model...</div>
+    <canvas id="c"></canvas>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="scroll-indicator" id="scroll-indicator">
+    <span>Scroll Down</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</div>
+        </div>
+
+        <!-- Spline 3D model -->
+        <spline-viewer url="https://prod.spline.design/8OHMySLvpJT6W5aq/scene.splinecode"></spline-viewer>
+    </div>
+
+    <!-- Chat interface fixed at the bottom -->
+    <div class="chat-interface">
+        <!-- Chat window - appears above the input when expanded -->
+        <div class="chat-window-container collapsed" id="chatWindow">
+            <div class="chat-window-inner">
+                <!-- Chat window header -->
+                <div class="chat-header">
+                    <div class="chat-status">
+                        <span class="status-text">Yumiko</span>
+                    </div>
+                    <div class="chat-title">CONVERSATION</div>
+                    <button class="chat-toggle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Chat messages area -->
+                <div class="chat-window" id="messagesContainer">
+                    <div class="message-container ai">
+                        <div class="message ai-message">
+                            hi..
+                        </div>
+                        <span class="message-time"></span>
+                    </div>
+
+                    <div class="typing-indicator" id="typingIndicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+
+                <!-- Tech decorative elements -->
+                <div class="window-tech-element wte-1"></div>
+                <div class="window-tech-element wte-2"></div>
+
+                <div class="pixel-group window-pixel-top">
+                    <div class="w-pixel"></div>
+                    <div class="w-pixel"></div>
+                    <div class="w-pixel"></div>
+                    <div class="w-pixel"></div>
+                </div>
+
+                <div class="pixel-group window-pixel-bottom">
+                    <div class="w-pixel"></div>
+                    <div class="w-pixel"></div>
+                    <div class="w-pixel"></div>
+                    <div class="w-pixel"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expand/collapse control - now positioned on top of the input bar -->
+        <div class="expand-collapse-indicator" id="toggleChat">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+                <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path>
+            </svg>
+        </div>
+
+        <!-- Chat input - always visible at the bottom -->
+        <div class="chat-input-wrapper">
+            <div class="chat-input-inner">
+                <!-- Tech elements -->
+                <div class="tech-element te-1"></div>
+                <div class="tech-element te-2"></div>
+
+                <!-- Pixel patterns -->
+                <div class="pixel-pattern pixel-pattern-right">
+                    <div class="pixel"></div>
+                    <div class="pixel"></div>
+                    <div class="pixel"></div>
+                </div>
+
+                <!-- Form -->
+                <form class="chat-form" id="messageForm">
+                    <input type="text" class="chat-input" id="userInput" placeholder="Ask me anything..." aria-label="Message">
+                    <div class="focus-line"></div>
+                    <button type="submit" class="chat-submit" aria-label="Send">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function () {
+  let scene, camera, renderer;
+  let loaderAnim = document.getElementById('js-loader');
+  let lights = [];
+  let clock = new THREE.Clock();
+  let model;
+  let sceneModel; // Second GLB model (scene)
+  let isDynamicLighting = false; // Set to false as per configuration
+  let headBone = null; // Head bone reference for mouse tracking
+
+  // Animation variables
+  let mixer;
+  let animations = new Map();
+  let activeAction = null;
+  let previousAction = null;
+
+  // Lighting and material settings
+  let isMonochrome = true; // Default monochrome setting
+  let originalMaterials = new Map(); // Store original materials
+  let skinColorHex = "#ffe0bd"; // Default skin color
+
+  // Control panel references
+  let keyLight, fillLight, rimLight, ambientLight;
+
+  // CUSTOM LIGHTING CONFIGURATION - Your specified configuration
+  const CUSTOM_LIGHTING = {
+    keyLight: { color: "#ffffff", intensity: 0, position: [-5.0, 5.0, 10.0] },
+    fillLight: { color: "#0062ff", intensity: 0.3, position: [10.0, 2.0, 5.0] },
+    rimLight: { color: "#ff0000", intensity: 1, position: [-10.0, 0.0, -10.0] },
+    ambientLight: { color: "#ffffff", intensity: 0.3 }
+  };
+
+  // Mouse tracking variables
+  let targetRotationX = 0;
+  let targetRotationY = 0;
+  let currentRotationX = 0;
+  let currentRotationY = 0;
+  const easing = 0.05; // Lower = smoother but slower response
+  const maxRotation = 0.5; // Maximum rotation amount
+
+  // Fixed camera position and target
+  const CAMERA_POSITION = new THREE.Vector3(0, 0, 1.5);
+  const CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
+
+  // Check if THREE is available before initializing
+  if (typeof THREE !== 'undefined') {
+    init();
+    initIntersectionObserver();
+  } else {
+    console.error('THREE.js not loaded properly');
+    document.getElementById('js-loader').textContent = 'Error: THREE.js library not loaded correctly';
+  }
+
+  function init() {
+    // Paths to your models
+    const MODEL_PATH = '/static/models/test4.glb'; // Character model
+    const SCENE_PATH = '/static/models/scene.glb'; // Scene model
+
+    // Function to enhance skin materials
+    function enhanceSkinMaterial(material) {
+      // Increase smoothness for skin
+      if (material.roughness !== undefined) {
+        material.roughness = 0.3; // Less rough for smoother skin
+      }
+
+      // Add slight subsurface scattering effect via transmission
+      if (material.transmission !== undefined) {
+        material.transmission = 0.1; // Slight translucency
+      }
+
+      // Set natural skin color - modified for more natural skin tone
+      if (material.color) {
+        // Use a natural skin tone (slightly warm beige)
+        material.color.setHex(parseInt(skinColorHex.replace('#', '0x'))); // A natural skin tone
+      }
+
+      // Make sure we're using physically-based rendering
+      material.metalness = 0.0;
+
+      // Improve normal mapping if available
+      if (material.normalScale) {
+        material.normalScale.set(1.2, 1.2); // Enhance normal map effect
+      }
+
+      // Force material update
+      material.needsUpdate = true;
+    }
+
+    const canvas = document.querySelector('#c');
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000); // Black background for contrast
+
+    // Camera setup with fixed position - NEVER MOVES
+    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.copy(CAMERA_POSITION);
+    camera.lookAt(CAMERA_TARGET);
+
+    // Advanced renderer settings for realistic lighting
+    renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      powerPreference: "high-performance",
+      alpha: true
+    });
+
+    // Enhanced shadow quality
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    // Physically-based rendering
+    renderer.physicallyCorrectLights = true;
+
+    // HDR tone mapping for better dynamic range
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+
+    // Color space correction
+    renderer.outputEncoding = THREE.sRGBEncoding;
+
+    // Enable physically correct lighting
+    renderer.physicallyCorrectLights = true;
+
+    // Optimize for quality
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2x for performance
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Lights - recreating the lighting from the glTF viewer in image 2
+    // Clear all previous lights first
+    scene.children.forEach(child => {
+      if (child.isLight) scene.remove(child);
+    });
+
+    // Setup custom lights using your specified configuration
+    setupLights(CUSTOM_LIGHTING);
+
+    // Model loader with DRACO compression support
+    const loader = new THREE.GLTFLoader ? new THREE.GLTFLoader() : null;
+    if (!loader) {
+      loaderAnim.textContent = 'Error: GLTFLoader not available';
+      console.error('GLTFLoader not found. Check if the library is loaded correctly.');
+      return;
+    }
+
+    const dracoLoader = new THREE.DRACOLoader ? new THREE.DRACOLoader() : null;
+    if (dracoLoader) {
+      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+      loader.setDRACOLoader(dracoLoader);
+    }
+
+    // Load model with progress indicator
+    loader.load(MODEL_PATH,
+      // OnLoad callback
+      function (gltf) {
+        model = gltf.scene;
+
+        // Store original materials before any modifications
+        model.traverse(o => {
+          if (o.isMesh && o.material) {
+            if (Array.isArray(o.material)) {
+              // Store array of materials
+              originalMaterials.set(o.uuid, o.material.map(mat => mat.clone()));
+            } else {
+              // Store single material
+              originalMaterials.set(o.uuid, o.material.clone());
+            }
+          }
+        });
+
+        // Enhance skin textures and materials
+        model.traverse(o => {
+          if (o.isMesh) {
+            // Check if this is a mesh that should not have shadows
+            const isNoShadowPart = (
+              o.name.toLowerCase().includes('face') ||
+              o.name.toLowerCase().includes('head') ||
+              o.name.toLowerCase().includes('arm') ||
+              o.name.toLowerCase().includes('hand') ||
+              (o.material && o.material.name && (
+                o.material.name.toLowerCase().includes('face') ||
+                o.material.name.toLowerCase().includes('head') ||
+                o.material.name.toLowerCase().includes('arm') ||
+                o.material.name.toLowerCase().includes('hand')
+              ))
+            );
+
+            // Set shadow properties - disable for specific parts
+            if (isNoShadowPart) {
+              // No shadows on face, arms, and hands
+              o.castShadow = false;
+              o.receiveShadow = false;
+            } else {
+              // Shadows on everything else
+              o.castShadow = true;
+              o.receiveShadow = true;
+            }
+
+            // Check if this is a skin material
+            if (o.material && (
+                o.name.toLowerCase().includes('skin') ||
+                o.name.toLowerCase().includes('face') ||
+                o.name.toLowerCase().includes('head') ||
+                (o.material.name && (
+                  o.material.name.toLowerCase().includes('skin') ||
+                  o.material.name.toLowerCase().includes('face')
+                ))
+              )) {
+
+              // Create a copy of the material to modify it
+              if (Array.isArray(o.material)) {
+                o.material = o.material.map(mat => {
+                  const newMat = mat.clone();
+                  enhanceSkinMaterial(newMat);
+                  return newMat;
+                });
+              } else {
+                const newMat = o.material.clone();
+                enhanceSkinMaterial(newMat);
+                o.material = newMat;
+              }
+            }
+          }
+
+          // Find the specific head bone with name "headx"
+          if (o.isBone && o.name === 'headx') {
+            headBone = o;
+            console.log('Found head bone:', o.name);
+          }
+        });
+
+        // Animation setup - check if the model has animations
+        if (gltf.animations && gltf.animations.length) {
+          // Create animation mixer
+          mixer = new THREE.AnimationMixer(model);
+
+          // Store all animations in our map
+          gltf.animations.forEach((clip) => {
+            const action = mixer.clipAction(clip);
+            animations.set(clip.name, action);
+            console.log(`Found animation: ${clip.name}`);
+          });
+
+          // Play the first animation by default
+          if (animations.size > 0) {
+            const defaultAnim = animations.get(Array.from(animations.keys())[0]);
+            playAnimation(defaultAnim);
+            console.log(`Playing default animation: ${Array.from(animations.keys())[0]}`);
+          }
+        } else {
+          console.log('No animations found in the model');
+        }
+
+        // Auto-center and resize model to fit in view
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3()).length();
+        const center = box.getCenter(new THREE.Vector3());
+
+        model.position.x += (model.position.x - center.x);
+        model.position.y += (model.position.y - center.y) - 0.0; // Move character down by 0.8 units
+        model.position.z += (model.position.z - center.z);
+
+        // Scale model to reasonable size
+        const scale = 10 / size;
+        model.scale.set(80, 80, 36);
+
+        // Add model to scene
+        scene.add(model);
+
+        // Only hide loader after both models are loaded
+        loaderAnim.textContent = 'Loading Scene...';
+
+        // Load the second model (scene)
+        loader.load(SCENE_PATH,
+          // OnLoad callback for scene
+          function (gltf) {
+            sceneModel = gltf.scene;
+
+            // Store original materials for scene model
+            sceneModel.traverse(o => {
+              if (o.isMesh && o.material) {
+                if (Array.isArray(o.material)) {
+                  originalMaterials.set(o.uuid, o.material.map(mat => mat.clone()));
+                } else {
+                  originalMaterials.set(o.uuid, o.material.clone());
+                }
+              }
+            });
+
+            // Position the scene model at the exact same place as the character model
+            sceneModel.position.copy(model.position);
+
+            // Auto-center and resize scene to match
+            const box = new THREE.Box3().setFromObject(sceneModel);
+            const size = box.getSize(new THREE.Vector3()).length();
+            const center = box.getCenter(new THREE.Vector3());
+
+            // Apply the same positioning logic as for the character
+            sceneModel.position.x += (sceneModel.position.x - center.x);
+            sceneModel.position.y += (sceneModel.position.y - center.y) + 2;
+            sceneModel.position.z += (sceneModel.position.z - center.z) + 2;
+
+            sceneModel.scale.set(80, 80, 40);
+
+            // Add scene model to the main scene WITHOUT modifying any materials
+            scene.add(sceneModel);
+
+            // Apply initial monochrome effect if enabled
+            if (isMonochrome) {
+              applyMonochromeEffect();
+            }
+
+            // Hide scroll indicator since we're not using parallax effect
+            document.getElementById('scroll-indicator').style.display = 'none';
+
+            // Finally hide the loader after both models are loaded
+            loaderAnim.style.display = 'none';
+
+
+          },
+          // OnProgress callback for scene
+          function(xhr) {
+            if (xhr.lengthComputable) {
+              const percentComplete = xhr.loaded / xhr.total * 100;
+              loaderAnim.textContent = 'Loading Scene: ' + Math.round(percentComplete) + '%';
+            }
+          },
+          // OnError callback for scene
+          function (error) {
+            console.error('Error loading scene model:', error);
+            loaderAnim.textContent = 'Error loading scene model';
+          }
+        );
+      },
+      // OnProgress callback for character
+      function(xhr) {
+        if (xhr.lengthComputable) {
+          const percentComplete = xhr.loaded / xhr.total * 100;
+          loaderAnim.textContent = 'Loading Character: ' + Math.round(percentComplete) + '%';
+        }
+      },
+      // OnError callback for character
+      function (error) {
+        console.error('Error loading character model:', error);
+        loaderAnim.textContent = 'Error loading character model';
+      }
+    );
+
+    // Function to setup lights based on preset
+    function setupLights(preset) {
+      // Clear existing lights from scene and array
+      scene.children.forEach(child => {
+        if (child.isLight) scene.remove(child);
+      });
+      lights = [];
+
+      // Key Light
+      keyLight = new THREE.DirectionalLight(
+        preset.keyLight.color,
+        preset.keyLight.intensity
+      );
+      keyLight.position.set(...preset.keyLight.position);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 2048;
+      keyLight.shadow.mapSize.height = 2048;
+      keyLight.shadow.bias = -0.001;
+      scene.add(keyLight);
+      lights.push(keyLight);
+
+      // Fill Light
+      fillLight = new THREE.DirectionalLight(
+        preset.fillLight.color,
+        preset.fillLight.intensity
+      );
+      fillLight.position.set(...preset.fillLight.position);
+      scene.add(fillLight);
+      lights.push(fillLight);
+
+      // Rim Light
+      rimLight = new THREE.DirectionalLight(
+        preset.rimLight.color,
+        preset.rimLight.intensity
+      );
+      rimLight.position.set(...preset.rimLight.position);
+      scene.add(rimLight);
+      lights.push(rimLight);
+
+      // Ambient Light
+      ambientLight = new THREE.AmbientLight(
+        preset.ambientLight.color,
+        preset.ambientLight.intensity
+      );
+      scene.add(ambientLight);
+    }
+
+    // Function to convert material to monochrome
+    function makeMonochrome(material) {
+      if (!material) return;
+
+      // Keep original color intensity but make it grayscale
+      if (material.color) {
+        const color = material.color.getHSL({h:0, s:0, l:0});
+        material.color.setHSL(0, 0, color.l); // Keep lightness, remove hue/saturation
+      }
+
+      // Increase contrast
+      if (material.roughness !== undefined) {
+        material.roughness = 0.7;
+      }
+
+      if (material.metalness !== undefined) {
+        material.metalness = 0.2;
+      }
+
+      material.needsUpdate = true;
+    }
+
+    // Apply monochrome effect to all models
+    function applyMonochromeEffect() {
+      if (!model || !sceneModel) return;
+
+      // Apply to character model
+      model.traverse((o) => {
+        if (o.isMesh && o.material) {
+          if (Array.isArray(o.material)) {
+            o.material.forEach(mat => {
+              makeMonochrome(mat);
+            });
+          } else {
+            makeMonochrome(o.material);
+          }
+        }
+      });
+
+      // Apply to scene model
+      sceneModel.traverse((o) => {
+        if (o.isMesh && o.material) {
+          if (Array.isArray(o.material)) {
+            o.material.forEach(mat => {
+              makeMonochrome(mat);
+            });
+          } else {
+            makeMonochrome(o.material);
+          }
+        }
+      });
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', onWindowResize, false);
+    onWindowResize();
+
+    // Add mouse move event listener for head tracking
+    document.addEventListener('mousemove', onMouseMove);
+
+    // Environment settings - set to none (black background)
+    scene.background = new THREE.Color(0x000000);
+
+    // Update shadow map settings - medium quality
+    scene.children.forEach(function(obj) {
+      if (obj.isDirectionalLight && obj.castShadow) {
+        obj.shadow.mapSize.width = 2048;
+        obj.shadow.mapSize.height = 2048;
+        obj.shadow.bias = -0.001;
+
+        // Adjust shadow camera
+        obj.shadow.camera.near = 1;
+        obj.shadow.camera.far = 50;
+        obj.shadow.camera.left = -15;
+        obj.shadow.camera.right = 15;
+        obj.shadow.camera.top = 15;
+        obj.shadow.camera.bottom = -15;
+      }
+    });
+
+    animate();
+  }
+
+  // Function to handle animation transitions
+  function playAnimation(newAction, duration = 0.5) {
+    if (!newAction || activeAction === newAction) return;
+
+    previousAction = activeAction;
+    activeAction = newAction;
+
+    if (previousAction) {
+      previousAction.fadeOut(duration);
+    }
+
+    activeAction
+      .reset()
+      .setEffectiveTimeScale(1)
+      .setEffectiveWeight(1)
+      .fadeIn(duration)
+      .play();
+  }
+
+
+
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function onMouseMove(e) {
+    const x = e.clientX / window.innerWidth;
+    const y = e.clientY / window.innerHeight;
+
+    // Set target rotation based on mouse position
+    // Subtract 0.5 to make center of screen neutral point
+    targetRotationX = (y - 0.5) * maxRotation;
+    targetRotationY = (x - 0.5) * maxRotation;
+  }
+
+  function updateHeadRotation() {
+    if (!headBone) return;
+
+    // Smooth interpolation between current and target rotation
+    currentRotationX += (targetRotationX - currentRotationX) * easing;
+    currentRotationY += (targetRotationY - currentRotationY) * easing;
+
+    // Apply rotation with limits
+    headBone.rotation.x = Math.max(Math.min(currentRotationX, maxRotation), -maxRotation);
+    headBone.rotation.y = Math.max(Math.min(currentRotationY, maxRotation), -maxRotation);
+
+    // Slight tilt based on horizontal rotation (more natural head movement)
+    headBone.rotation.z = -currentRotationY * 0.3;
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // Get elapsed time
+    const delta = clock.getDelta();
+    const elapsedTime = clock.getElapsedTime();
+
+    // Update animations if mixer exists
+    if (mixer) {
+      mixer.update(delta);
+    }
+
+    // Update head rotation based on mouse position
+    updateHeadRotation();
+
+    // Render scene
+    renderer.render(scene, camera);
+  }
+
+  // Setup scroll-based animation changes (optional)
+  function setupScrollBasedAnimations() {
+    if (!animations || animations.size === 0) return;
+
+    // Get animation names for easier reference
+    const animNames = Array.from(animations.keys());
+
+    // Get scroll position as a percentage
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.body.offsetHeight - window.innerHeight;
+      const scrollPercent = scrollTop / docHeight;
+
+      // Determine which animation to play based on scroll percentage
+      let selectedAnim;
+
+      if (scrollPercent < 0.25 && animations.has('Idle')) {
+        selectedAnim = 'Idle';
+      } else if (scrollPercent < 0.5 && animations.has('Talk')) {
+        selectedAnim = 'Talk';
+      } else if (scrollPercent < 0.75 && animations.has('Wave')) {
+        selectedAnim = 'Wave';
+      } else if (animations.has('Dance')) {
+        selectedAnim = 'Dance';
+      } else {
+        // If none of the specific animations exist, use the first available one
+        selectedAnim = animNames[Math.floor(scrollPercent * animNames.length)];
+      }
+
+      if (selectedAnim) {
+        playAnimation(animations.get(selectedAnim));
+      }
+    });
+  }
+
+  // Call this if you want scroll-triggered animations
+  // setupScrollBasedAnimations();
+
+  // Initialize intersection observer for text sections
+  function initIntersectionObserver() {
+    const sections = document.querySelectorAll('.text-section');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+
+          // Optional: Trigger specific animations based on which section is visible
+          if (mixer && animations.size > 0) {
+            // Get section ID or index
+            const sectionIndex = Array.from(sections).indexOf(entry.target);
+            const animNames = Array.from(animations.keys());
+
+            // Play different animations for different sections if available
+            if (sectionIndex < animNames.length) {
+              playAnimation(animations.get(animNames[sectionIndex]));
+            }
+          }
+        }
+      });
+    }, {
+      threshold: 0.2
+    });
+
+    sections.forEach(section => {
+      observer.observe(section);
+    });
+  }
+})();
+</script>
+    <!-- Scripts -->
+    <script>
+/**
+ * Yumiko AI Chat Interface - Complete JavaScript with Direct TTS and Input Locking
+ *
+ * This script manages a fourth-wall breaking AI chat interface with optimized text-to-speech capabilities.
+ * Features include direct streaming TTS, text scramble effects, form abandonment detection,
+ * proactive messaging, browser information collection, and input locking during voice playback.
+ */
+
+// Use an IIFE to create module-like encapsulation and avoid global variables
+(function() {
+  'use strict';
+
+  // Reusable DOM selectors - cached for performance
+  const DOM = {
+    chatWindow: document.getElementById('chatWindow'),
+    toggleChat: document.getElementById('toggleChat'),
+    messageForm: document.getElementById('messageForm'),
+    userInput: document.getElementById('userInput'),
+    messagesContainer: document.getElementById('messagesContainer'),
+    typingIndicator: document.getElementById('typingIndicator'),
+    chatToggle: document.querySelector('.chat-toggle'),
+    backButton: document.getElementById('backButton'),
+    voiceSettingsButton: null,
+    voiceSettingsDropdown: null,
+    voiceSettingsContainer: null,
+    voiceToggle: null,
+    voiceVolume: null,
+    contentModeToggle: null, // Added for 3D toggle in voice settings
+    chatSubmit: document.querySelector('.chat-submit'),
+    inputLockOverlay: null
+  };
+
+  // Configuration parameters - gathered in one place for easy adjustment
+  const CONFIG = {
+    // User session
+    USER_ID_KEY: 'user_id',
+
+    // Timing parameters
+    IDLE_TIMEOUT: 45000, // 45 seconds before being considered idle
+    PROACTIVE_CHECK_INTERVAL: 60000, // Check once per minute
+    RESIZE_COOLDOWN: 35000, // Cooldown between resize comments
+    TAB_COMMENT_COOLDOWN: 60000, // Cooldown between tab switching comments
+    INFO_COOLDOWN: 45000, // Cooldown between browser info sends
+
+    // API endpoints
+    CHAT_API: '/chat-api',
+    IDLE_CHECK_API: '/check-idle',
+
+    // Feature flags - can be toggled to enable/disable features
+    ENABLE_BROWSER_DETECTION: true,
+    ENABLE_PROACTIVE_MESSAGES: true,
+    ENABLE_TEXT_SCRAMBLE: true,
+    ENABLE_FORM_ABANDONMENT: true,
+    ENABLE_TTS: true,  // Enable text-to-speech by default
+
+    // TTS settings
+    TTS_VOLUME: 0.8,   // Default volume (0.0 to 1.0)
+
+    // Browser query keywords for detection
+    BROWSER_QUERY_KEYWORDS: [
+      'what browser', 'which browser', 'browser am i using',
+      'screen size', 'window size', 'resolution',
+      'how many tabs', 'my tabs', 'open tabs',
+      'device', 'phone', 'desktop', 'computer',
+      'battery', 'charging', 'what can you see',
+      'are you watching', 'how do you know'
+    ]
+  };
+
+  // App state - centralized state management
+  const STATE = {
+    userId: null,
+    idleTimer: null,
+    proactiveCheckInterval: null,
+    isIdle: false,
+    lastBrowserInfoSent: 0,
+    lastResizeComment: 0,
+    lastTabComment: 0,
+    browserCollector: null,
+    resizeTimer: null,
+    initialized: false,
+
+    // TTS state
+    ttsEnabled: true,  // Default TTS state
+    audioQueue: [],    // Queue for audio playback
+    isPlayingAudio: false, // Flag to track if audio is currently playing
+    audioContext: null  // Web Audio context
+  };
+
+  /**
+   * ==============================
+   * Core Application Functions
+   * ==============================
+   */
+
+  /**
+   * Initialize the application
+   */
+  function init() {
+    if (STATE.initialized) return;
+
+    // Get or create user ID
+    STATE.userId = getUserId();
+
+    // Attach event listeners
+    attachEventListeners();
+
+    // Initialize features
+    if (CONFIG.ENABLE_BROWSER_DETECTION) {
+      STATE.browserCollector = initBrowserInfoCollector();
+    }
+
+    if (CONFIG.ENABLE_FORM_ABANDONMENT) {
+      initFormAbandonmentDetection();
+    }
+
+    if (CONFIG.ENABLE_PROACTIVE_MESSAGES) {
+      initIdleDetection();
+    }
+
+    if (DOM.userInput) {
+      // Focus input field on load
+      DOM.userInput.focus();
+    }
+
+    // Apply text scramble to initial message if present
+    if (CONFIG.ENABLE_TEXT_SCRAMBLE) {
+      const firstAiMessage = document.querySelector('.ai-message');
+      if (firstAiMessage) {
+        const initialText = firstAiMessage.textContent;
+        firstAiMessage.textContent = '';
+        const fx = new TextScramble(firstAiMessage);
+        fx.setText(initialText);
+      }
+    }
+
+    // Initialize voice settings
+    if (CONFIG.ENABLE_TTS) {
+      initVoiceSettings();
+    }
+
+    STATE.initialized = true;
+    console.log('Yumiko chat interface initialized');
+  }
+
+  /**
+   * Attach event listeners to UI elements
+   */
+  function attachEventListeners() {
+    // Toggle chat window
+    if (DOM.toggleChat) {
+      DOM.toggleChat.addEventListener('click', toggleChatWindow);
+    }
+
+    // Close chat window
+    if (DOM.chatToggle) {
+      DOM.chatToggle.addEventListener('click', closeChatWindow);
+    }
+
+    // Handle message submission
+    if (DOM.messageForm) {
+      DOM.messageForm.addEventListener('submit', handleMessageSubmit);
+    }
+
+    // Back button - navigate back in browser history
+    if (DOM.backButton) {
+      DOM.backButton.addEventListener('click', function() {
+        window.history.back();
+      });
+    }
+
+    // Setup window event handling with debouncing
+    setupWindowEvents();
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+  }
+
+  /**
+   * Set up window-level event handlers with proper debouncing
+   */
+  function setupWindowEvents() {
+    // Window resize - with debouncing
+    window.addEventListener('resize', debounce(function() {
+      // Window was resized - capture new dimensions
+      if (STATE.browserCollector) {
+        STATE.browserCollector.handleResize();
+      }
+    }, 250));
+
+    // Tab visibility changes
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        handleTabReturn();
+      } else {
+        if (STATE.browserCollector) {
+          STATE.browserCollector.recordEvent('tab_switch_away');
+        }
+      }
+    });
+
+    // Use passive event listeners for better scroll performance
+    window.addEventListener('scroll', function() {
+      if (STATE.browserCollector) {
+        STATE.browserCollector.handleScroll();
+      }
+    }, { passive: true });
+
+    // Audio context initialization on user gesture
+    document.addEventListener('click', function initAudioContext() {
+      if (CONFIG.ENABLE_TTS && !STATE.audioContext) {
+        STATE.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }, { once: true });
+  }
+
+  /**
+   * Get user ID from localStorage or generate a new one
+   */
+  function getUserId() {
+    let userId = localStorage.getItem(CONFIG.USER_ID_KEY);
+    if (!userId) {
+      userId = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem(CONFIG.USER_ID_KEY, userId);
+    }
+    return userId;
+  }
+
+  /**
+   * Handle when user returns to the tab
+   */
+  function handleTabReturn() {
+    if (!STATE.browserCollector) return;
+
+    STATE.browserCollector.recordEvent('tab_switch_return');
+    STATE.browserCollector.justReturnedToTab = true;
+
+    // Reset after 5 seconds
+    setTimeout(() => {
+      STATE.browserCollector.justReturnedToTab = false;
+    }, 5000);
+
+    // Check if we should comment on tab return
+    const now = Date.now();
+    if (STATE.browserCollector.tabSwitchCount > 2 &&
+        now - STATE.lastTabComment > CONFIG.TAB_COMMENT_COOLDOWN &&
+        Math.random() < 0.4) {
+
+      callChatApi({
+        message: "...",
+        user_id: STATE.userId,
+        browserInfo: {
+          justReturnedToTab: true,
+          tabSwitchCount: STATE.browserCollector.tabSwitchCount,
+          timeAwayMillis: now - STATE.browserCollector.lastActivityTime
+        }
+      })
+      .then(data => {
+        addMessage(data.message, 'ai', data.timestamp, null, data.message_id);
+        STATE.lastTabComment = now;
+      })
+      .catch(error => console.error('Error:', error));
+    }
+  }
+
+  /**
+   * Toggle chat window visibility
+   */
+  function toggleChatWindow() {
+    DOM.chatWindow.classList.toggle('collapsed');
+
+    // Update the toggle icon based on state
+    const isCollapsed = DOM.chatWindow.classList.contains('collapsed');
+    DOM.toggleChat.querySelector('svg path').setAttribute('d',
+      isCollapsed
+      ? "M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"
+      : "M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
+    );
+  }
+
+  /**
+   * Close chat window
+   */
+  function closeChatWindow() {
+    DOM.chatWindow.classList.add('collapsed');
+    // Update the toggle icon
+    DOM.toggleChat.querySelector('svg path').setAttribute('d',
+      "M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"
+    );
+  }
+
+  /**
+   * Lock the chat input while audio is playing
+   */
+  function lockChatInput() {
+    // Skip if TTS is disabled or input element not found
+    if (!STATE.ttsEnabled || !DOM.userInput) return;
+
+    // Disable the input field
+    DOM.userInput.disabled = true;
+    DOM.userInput.placeholder = "Yumiko is speaking...";
+
+    // Disable the submit button
+    if (DOM.chatSubmit) {
+      DOM.chatSubmit.disabled = true;
+      DOM.chatSubmit.classList.add('disabled');
+    }
+
+    // Add overlay if it doesn't exist yet
+    if (!DOM.inputLockOverlay) {
+      createInputLockOverlay();
+    }
+
+    // Show the overlay
+    DOM.inputLockOverlay.classList.add('active');
+  }
+
+  /**
+   * Unlock the chat input after audio finishes
+   */
+  function unlockChatInput() {
+    if (!DOM.userInput) return;
+
+    // Skip if the input is already enabled (wasn't locked)
+    if (!DOM.userInput.disabled) return;
+
+    // Re-enable the input field
+    DOM.userInput.disabled = false;
+    DOM.userInput.placeholder = "Ask me anything...";
+
+    // Re-enable the submit button
+    if (DOM.chatSubmit) {
+      DOM.chatSubmit.disabled = false;
+      DOM.chatSubmit.classList.remove('disabled');
+    }
+
+    // Hide the overlay
+    if (DOM.inputLockOverlay) {
+      DOM.inputLockOverlay.classList.remove('active');
+    }
+
+    // Focus the input for immediate typing
+    DOM.userInput.focus();
+  }
+
+  /**
+   * Create overlay element for visual feedback when input is locked
+   */
+  function createInputLockOverlay() {
+    const overlay = document.createElement('div');
+    overlay.className = 'input-lock-overlay';
+    overlay.innerHTML = `
+      <div class="lock-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <span class="lock-text">Listening to Yumiko...</span>
+    `;
+
+    // Insert after the inner container
+    const chatInputInner = document.querySelector('.chat-input-inner');
+    if (chatInputInner) {
+      chatInputInner.appendChild(overlay);
+      DOM.inputLockOverlay = overlay;
+    }
+  }
+
+  /**
+   * Play streaming audio directly from text without needing to use message IDs
+   * This avoids the MongoDB lookup entirely
+   */
+  function playDirectStreamingAudio(text, messageElement) {
+    if (!STATE.ttsEnabled || !text) {
+      return;
+    }
+
+    // Performance tracking
+    const startTime = performance.now();
+    console.log(`Starting direct streaming for text (${text.length} chars)`);
+
+    // Create an Audio context if we don't have one
+    if (!STATE.audioContext && window.AudioContext) {
+        STATE.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    // Mark as playing
+    STATE.isPlayingAudio = true;
+
+    // Add visual feedback
+    if (messageElement) {
+        messageElement.classList.add('speaking');
+    }
+
+    // Prepare the text data to send
+    const textData = {
+        text: text
+    };
+
+    // Make a POST request to the streaming endpoint
+    fetch('/stream-tts-direct', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(textData),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        // Create a new audio element
+        const audio = new Audio();
+
+        // Set up event listeners
+        audio.addEventListener('canplaythrough', () => {
+            console.log(`Audio ready to play in ${(performance.now() - startTime).toFixed(1)}ms`);
+        });
+
+        audio.addEventListener('playing', () => {
+            console.log(`Audio started playing in ${(performance.now() - startTime).toFixed(1)}ms`);
+        });
+
+        // Create a blob URL from the response
+        return response.blob().then(blob => {
+            const url = URL.createObjectURL(blob);
+            audio.src = url;
+            audio.volume = CONFIG.TTS_VOLUME;
+
+            // Play the audio
+            return audio.play()
+                .then(() => {
+                    // When audio finishes
+                    audio.onended = function() {
+                        console.log(`Audio playback completed in ${(performance.now() - startTime).toFixed(1)}ms`);
+                        URL.revokeObjectURL(url); // Clean up
+                        if (messageElement) {
+                            messageElement.classList.remove('speaking');
+                        }
+                        STATE.isPlayingAudio = false;
+
+                        // Unlock input when audio finishes
+                        unlockChatInput();
+
+                        // Continue with next item in queue if any
+                        if (STATE.audioQueue.length > 0) {
+                            processAudioQueue();
+                        }
+                    };
+                })
+                .catch(error => {
+                    console.error('Error playing audio:', error);
+                    URL.revokeObjectURL(url); // Clean up
+                    if (messageElement) {
+                        messageElement.classList.remove('speaking');
+                    }
+                    STATE.isPlayingAudio = false;
+
+                    // Unlock input if there's an error
+                    unlockChatInput();
+
+                    if (STATE.audioQueue.length > 0) {
+                        processAudioQueue();
+                    }
+                });
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching streaming audio:', error);
+        if (messageElement) {
+            messageElement.classList.remove('speaking');
+        }
+        STATE.isPlayingAudio = false;
+
+        // Unlock input if there's an error
+        unlockChatInput();
+
+        // Continue with next item in queue if any
+        if (STATE.audioQueue.length > 0) {
+            processAudioQueue();
+        }
+    });
+  }
+
+  /**
+   * Play streaming audio from the server using message ID (legacy method)
+   */
+  function playStreamingAudio(messageId, messageElement) {
+    if (!STATE.ttsEnabled || !messageId) return;
+
+    // Performance tracking
+    const startTime = performance.now();
+    console.log(`Starting streaming playback for message ${messageId}`);
+
+    // Create an Audio context if we don't have one
+    if (!STATE.audioContext && window.AudioContext) {
+        STATE.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    // Mark as playing
+    STATE.isPlayingAudio = true;
+
+    // Add visual feedback
+    if (messageElement) {
+        messageElement.classList.add('speaking');
+    }
+
+    // Create a new audio element
+    const audio = new Audio();
+
+    // Set up event listeners before setting source
+    audio.addEventListener('canplaythrough', () => {
+        console.log(`Audio ready to play in ${(performance.now() - startTime).toFixed(1)}ms`);
+    });
+
+    audio.addEventListener('playing', () => {
+        console.log(`Audio started playing in ${(performance.now() - startTime).toFixed(1)}ms`);
+    });
+
+    // Set the source to our streaming endpoint
+    audio.src = `/stream-tts/${messageId}`;
+    audio.volume = CONFIG.TTS_VOLUME;
+
+    // Add error handling
+    audio.onerror = function(e) {
+        console.error('Error playing streaming audio:', e);
+        if (messageElement) {
+            messageElement.classList.remove('speaking');
+        }
+        STATE.isPlayingAudio = false;
+
+        // Unlock input if there's an error
+        unlockChatInput();
+
+        // Continue with next item in queue if any
+        if (STATE.audioQueue.length > 0) {
+            processAudioQueue();
+        }
+    };
+
+    // When audio finishes
+    audio.onended = function() {
+        console.log(`Audio playback completed in ${(performance.now() - startTime).toFixed(1)}ms`);
+        if (messageElement) {
+            messageElement.classList.remove('speaking');
+        }
+        STATE.isPlayingAudio = false;
+
+        // Unlock input when audio finishes
+        unlockChatInput();
+
+        // Continue with next item in queue if any
+        if (STATE.audioQueue.length > 0) {
+            processAudioQueue();
+        }
+    };
+
+    // Start playing - this will automatically stream from the server
+    audio.play().catch(error => {
+        console.error('Error starting streaming audio:', error);
+        if (messageElement) {
+            messageElement.classList.remove('speaking');
+        }
+        STATE.isPlayingAudio = false;
+
+        // Unlock input if there's an error
+        unlockChatInput();
+
+        // Continue with next item in queue if any
+        if (STATE.audioQueue.length > 0) {
+            processAudioQueue();
+        }
+    });
+  }
+
+  /**
+   * Modified handleMessageSubmit for faster responses with input locking
+   */
+  function handleMessageSubmit(e) {
+    e.preventDefault();
+    const message = DOM.userInput.value.trim();
+
+    if (!message) return;
+
+    // Ensure chat window is open
+    if (DOM.chatWindow.classList.contains('collapsed')) {
+        DOM.chatWindow.classList.remove('collapsed');
+        DOM.toggleChat.querySelector('svg path').setAttribute('d',
+            "M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
+        );
+    }
+
+    // Only lock input if TTS is enabled
+    if (STATE.ttsEnabled) {
+      lockChatInput();
+    }
+
+    // Reset idle state
+    resetIdleTimer();
+
+    // Add user message to UI immediately
+    addMessage(message, 'user');
+    DOM.userInput.value = '';
+
+    // Show typing indicator
+    DOM.typingIndicator.classList.add('active');
+
+    // Performance tracking
+    const requestStartTime = performance.now();
+
+    // Collect browser info if enabled
+    let browserInfo = {};
+    if (CONFIG.ENABLE_BROWSER_DETECTION && STATE.browserCollector) {
+        browserInfo = STATE.browserCollector.collectBrowserInfo();
+    }
+
+    // Send message to server
+    callChatApi({
+        message: message,
+        user_id: STATE.userId,
+        browserInfo: browserInfo,
+        enable_tts: STATE.ttsEnabled
+    })
+    .then(data => {
+      // Performance tracking
+      const responseTime = performance.now() - requestStartTime;
+      console.log(`Full API response received in ${responseTime.toFixed(1)}ms`);
+
+      // Hide typing indicator
+      DOM.typingIndicator.classList.remove('active');
+
+      // Add AI message to UI
+      const messageElement = addMessage(data.message, 'ai', data.timestamp, null, data.message_id);
+
+      // If TTS is disabled, make sure the input is unlocked
+      if (!STATE.ttsEnabled) {
+        unlockChatInput();
+      }
+      // Otherwise, input remains locked until audio playback completes
+      // The unlockChatInput function will be called at the end of audio playback
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        DOM.typingIndicator.classList.remove('active');
+        addMessage("Sorry, I'm having trouble connecting. Please try again.", 'ai');
+
+        // Unlock input if there's an error
+        unlockChatInput();
+    });
+  }
+
+  /**
+   * Add a message to the chat window with optional text scramble effect and TTS
+   */
+  function addMessage(text, sender, timestamp = null, audioData = null, messageId = null) {
+    const now = new Date();
+    const time = timestamp || `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    // Create message elements
+    const messageContainer = document.createElement('div');
+    messageContainer.className = `message-container ${sender === 'ai' ? 'ai' : ''}`;
+
+    // Add message ID as data attribute if available
+    if (messageId) {
+        messageContainer.dataset.messageId = messageId;
+    }
+
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${sender === 'user' ? 'user-message' : 'ai-message'}`;
+
+    // For user messages, just set the text content directly
+    if (sender === 'user') {
+        messageElement.textContent = text;
+    } else {
+        // For AI messages
+        if (CONFIG.ENABLE_TEXT_SCRAMBLE) {
+            messageElement.textContent = '';
+        } else {
+            messageElement.textContent = text;
+        }
+
+        // Add TTS button for AI messages if TTS is enabled
+        if (CONFIG.ENABLE_TTS) {
+            const ttsButton = document.createElement('button');
+            ttsButton.className = 'message-tts-button';
+            ttsButton.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 6v12M8 9v6M16 9v6"></path>
+                </svg>
+            `;
+            ttsButton.setAttribute('aria-label', 'Play message');
+            ttsButton.addEventListener('click', function() {
+                if (audioData) {
+                    // If we have audio data use it
+                    addAudioToQueue(audioData, messageElement);
+                } else if (messageId) {
+                    // If we have a message ID, can use the legacy endpoint
+                    playStreamingAudio(messageId, messageElement);
+                } else {
+                    // Otherwise use direct text streaming - most efficient
+                    playDirectStreamingAudio(text, messageElement);
+                }
+            });
+            messageElement.appendChild(ttsButton);
+        }
+    }
+
+    const timeElement = document.createElement('span');
+    timeElement.className = 'message-time';
+    timeElement.textContent = time;
+
+    // Assemble message
+    messageContainer.appendChild(messageElement);
+    messageContainer.appendChild(timeElement);
+
+    // Insert before typing indicator
+    DOM.messagesContainer.insertBefore(messageContainer, DOM.typingIndicator);
+
+    // Apply scramble effect for AI messages if enabled
+    if (sender === 'ai' && CONFIG.ENABLE_TEXT_SCRAMBLE) {
+        const fx = new TextScramble(messageElement);
+        fx.setText(text);
+    }
+
+    // Scroll to bottom
+    scrollToBottom();
+
+    // Ensure chat window is open when there's a new message
+    if (DOM.chatWindow.classList.contains('collapsed')) {
+        DOM.chatWindow.classList.remove('collapsed');
+        DOM.toggleChat.querySelector('svg path').setAttribute('d',
+            "M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
+        );
+    }
+
+    // Auto-play audio for AI messages if TTS is enabled
+    if (sender === 'ai' && STATE.ttsEnabled) {
+      // Use a small delay for faster perception
+      setTimeout(() => {
+          // ONLY USE ONE METHOD - prioritize direct streaming
+          playDirectStreamingAudio(text, messageElement);
+      }, 200);
+    }
+
+    // Track message in browser collector if enabled
+    if (STATE.browserCollector && sender === 'ai') {
+        STATE.browserCollector.trackMessage(text, false);
+    }
+
+    return messageElement;
+  }
+
+  /**
+   * Updated addAudioToQueue function to handle all playback methods
+   */
+  function addAudioToQueue(audioData, messageElement) {
+    if (!STATE.ttsEnabled) return;
+
+    // Get text and message ID if available
+    const messageId = messageElement?.parentNode?.dataset?.messageId;
+    const text = messageElement?.textContent || '';
+
+    // Determine the best way to play audio
+    if (audioData) {
+        // If we have audio data, use it (prioritize cached audio)
+        STATE.audioQueue.push({
+            type: 'base64',
+            audio: audioData,
+            element: messageElement
+        });
+    } else if (messageId) {
+        // If no audio data but have message ID
+        STATE.audioQueue.push({
+            type: 'stream',
+            messageId: messageId,
+            element: messageElement
+        });
+    } else if (text) {
+        // If we have the text directly
+        STATE.audioQueue.push({
+            type: 'direct',
+            text: text,
+            element: messageElement
+        });
+    }
+
+    // If nothing is playing, start processing the queue
+    if (!STATE.isPlayingAudio) {
+        processAudioQueue();
+    }
+  }
+
+  /**
+   * Updated processAudioQueue function to handle all playback methods
+   */
+  function processAudioQueue() {
+    if (STATE.audioQueue.length === 0) {
+      STATE.isPlayingAudio = false;
+      // Only try to unlock if TTS is enabled
+      if (STATE.ttsEnabled) {
+        unlockChatInput(); // Make sure to unlock when queue is empty
+      }
+      return;
+    }
+
+    STATE.isPlayingAudio = true;
+    const nextItem = STATE.audioQueue.shift();
+
+    // If this is a direct text item
+    if (nextItem.type === 'direct') {
+        playDirectStreamingAudio(nextItem.text, nextItem.element);
+        return;
+    }
+
+    // If this is a streaming item by message ID
+    if (nextItem.type === 'stream') {
+        playStreamingAudio(nextItem.messageId, nextItem.element);
+        return;
+    }
+
+    // Otherwise, process as regular base64 audio
+    console.log('Playing cached audio from queue');
+    const audio = new Audio();
+
+    // Convert base64 to blob URL for better performance
+    const binary = atob(nextItem.audio);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: 'audio/wav' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    audio.src = blobUrl;
+    audio.volume = CONFIG.TTS_VOLUME;
+
+    // Highlight the message being played
+    if (nextItem.element) {
+        nextItem.element.classList.add('speaking');
+    }
+
+    // Play the audio
+    audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+        // Continue to next item even if this one fails
+        if (nextItem.element) {
+            nextItem.element.classList.remove('speaking');
+        }
+        processAudioQueue();
+    });
+
+    // When audio finishes, move to next item
+    audio.onended = function() {
+      // Release memory
+      URL.revokeObjectURL(blobUrl);
+
+      // Remove highlight
+      if (nextItem.element) {
+        nextItem.element.classList.remove('speaking');
+      }
+
+      // Process next item in queue
+      processAudioQueue();
+
+      // If queue is now empty and TTS is enabled, unlock input
+      if (STATE.audioQueue.length === 0 && STATE.ttsEnabled) {
+        unlockChatInput();
+      }
+    };
+  }
+
+  /**
+   * Scroll the chat window to the bottom
+   */
+  function scrollToBottom() {
+    DOM.messagesContainer.scrollTop = DOM.messagesContainer.scrollHeight;
+  }
+
+  /**
+   * Make API call to chat endpoint - optimized for faster response
+   */
+  function callChatApi(data) {
+    // Add request timestamp for measuring response time
+    data.requestTime = Date.now();
+    console.log(JSON.stringify(data));
+    return fetch("https://backend-mauve-one.vercel.app/chat-api", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+
+        // Calculate response time for analytics
+        const responseTime = Date.now() - data.requestTime;
+        console.log(`Server response time: ${responseTime}ms`);
+
+        return response.json();
+    });
+  }
+
+  /**
+   * Check for proactive messages when user is idle
+   */
+  function checkForProactiveMessage() {
+    if (!STATE.isIdle || !CONFIG.ENABLE_PROACTIVE_MESSAGES) return;
+
+    // Collect browser info if enabled
+    let browserInfo = {};
+    if (CONFIG.ENABLE_BROWSER_DETECTION && STATE.browserCollector) {
+      browserInfo = STATE.browserCollector.collectBrowserInfo();
+    }
+
+    fetch(CONFIG.IDLE_CHECK_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: STATE.userId,
+        browserInfo: browserInfo,
+        enable_tts: STATE.ttsEnabled  // Include TTS preference
+      }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.proactive) {
+        // Show typing indicator briefly
+        DOM.typingIndicator.classList.add('active');
+
+        // Add short delay to simulate typing
+        setTimeout(() => {
+          // Hide typing indicator
+          DOM.typingIndicator.classList.remove('active');
+
+          // Add AI message with audio if available
+          addMessage(data.message, 'ai', data.timestamp, null, data.message_id);
+        }, 1500);
+      }
+    })
+    .catch(error => console.error('Error checking for proactive messages:', error));
+  }
+
+  /**
+   * Initialize idle detection for proactive messaging
+   */
+  function initIdleDetection() {
+    // Activities that reset the idle timer
+    const events = [
+      'mousedown', 'mousemove', 'keypress',
+      'scroll', 'touchstart', 'click'
+    ];
+
+    // Add event listeners for all activities with passive option for better performance
+    events.forEach(event => {
+      document.addEventListener(event, resetIdleTimer, { passive: true });
+    });
+
+    // Initial setup
+    resetIdleTimer();
+
+    // Start the interval to check for proactive messages
+    // Use a less frequent check to save resources
+    STATE.proactiveCheckInterval = setInterval(checkForProactiveMessage, CONFIG.PROACTIVE_CHECK_INTERVAL);
+  }
+
+  /**
+   * Reset the idle timer
+   */
+  function resetIdleTimer() {
+    clearTimeout(STATE.idleTimer);
+    STATE.isIdle = false;
+
+    // Set a new idle timer
+    STATE.idleTimer = setTimeout(() => {
+      STATE.isIdle = true;
+    }, CONFIG.IDLE_TIMEOUT);
+
+    // Update browser collector's last activity time if enabled
+    if (STATE.browserCollector) {
+      STATE.browserCollector.lastActivityTime = Date.now();
+    }
+  }
+
+  /**
+   * Cleanup when page is unloaded
+   */
+  function cleanup() {
+    clearTimeout(STATE.idleTimer);
+    clearInterval(STATE.proactiveCheckInterval);
+    clearTimeout(STATE.resizeTimer);
+  }
+
+  /**
+   * ==============================
+   * Voice Settings Functions
+   * ==============================
+   */
+
+  /**
+   * Create voice settings UI elements with 3D toggle
+   */
+  function createVoiceSettingsUI() {
+    // Create container
+    const container = document.createElement('div');
+    container.className = 'voice-settings-container';
+    container.innerHTML = `
+        <button class="voice-settings-button" id="voiceSettingsButton" aria-label="Voice Settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 6v12M8 9v6M16 9v6"></path>
+            </svg>
+        </button>
+        <div class="voice-settings-dropdown" id="voiceSettingsDropdown">
+            <div class="voice-settings-header">Voice & Display Settings</div>
+
+            <!-- Voice Toggle Option -->
+            <div class="voice-settings-option">
+                <label class="voice-toggle-label">
+                    <span>Enable Voice</span>
+                    <div class="voice-toggle-switch">
+                        <input type="checkbox" id="voiceToggle" checked>
+                        <span class="voice-toggle-slider"></span>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Volume Option -->
+            <div class="voice-settings-option">
+                <label class="voice-volume-label">
+                    <span>Volume</span>
+                    <input type="range" id="voiceVolume" min="0" max="1" step="0.1" value="0.8" class="voice-volume-slider">
+                </label>
+            </div>
+
+            <!-- 3D Mode Toggle Option -->
+            <div class="voice-settings-option">
+                <label class="voice-toggle-label">
+                    <span>3D Mode</span>
+                    <div class="voice-toggle-switch">
+                        <input type="checkbox" id="contentModeToggle">
+                        <span class="voice-toggle-slider"></span>
+                    </div>
+                </label>
+            </div>
+        </div>
+    `;
+
+    // Insert after chat header
+    const chatHeader = document.querySelector('.chat-header');
+    if (chatHeader) {
+        chatHeader.parentNode.insertBefore(container, chatHeader.nextSibling);
+
+        // Update DOM references
+        DOM.voiceSettingsButton = document.getElementById('voiceSettingsButton');
+        DOM.voiceSettingsDropdown = document.getElementById('voiceSettingsDropdown');
+        DOM.voiceToggle = document.getElementById('voiceToggle');
+        DOM.voiceVolume = document.getElementById('voiceVolume');
+        DOM.contentModeToggle = document.getElementById('contentModeToggle');
+        DOM.voiceSettingsContainer = container;
+    }
+  }
+
+  /**
+   * Connect 3D toggle in voice settings to the main content toggle
+   */
+  function initContentModeToggle() {
+    const contentModeToggle = document.getElementById('contentModeToggle');
+    const mainContentToggle = document.querySelector('.content-toggle');
+
+    if (!contentModeToggle || !mainContentToggle) return;
+
+    // Get the current state of the main toggle
+    const isIn3DMode = mainContentToggle.classList.contains('active');
+    contentModeToggle.checked = isIn3DMode;
+
+    // When settings toggle changes, update main toggle
+    contentModeToggle.addEventListener('change', function() {
+      // Only trigger if the state is actually different
+      const currentlyActive = mainContentToggle.classList.contains('active');
+      if ((this.checked && !currentlyActive) || (!this.checked && currentlyActive)) {
+        // Simulate click on the main toggle button
+        mainContentToggle.click();
+      }
+    });
+
+    // When main toggle is clicked, update settings toggle
+    mainContentToggle.addEventListener('click', function() {
+      // Use setTimeout to ensure this runs after the main toggle's state has changed
+      setTimeout(() => {
+        const is3DMode = this.classList.contains('active');
+        contentModeToggle.checked = is3DMode;
+
+        // Update local storage if you want to persist the setting
+        localStorage.setItem('3d_mode_enabled', is3DMode ? 'true' : 'false');
+      }, 10);
+    });
+
+    // Load saved preference if available
+    const saved3DMode = localStorage.getItem('3d_mode_enabled');
+    if (saved3DMode !== null) {
+      const shouldEnable3D = saved3DMode === 'true';
+
+      // Only trigger if the current state differs from the saved state
+      if ((shouldEnable3D && !isIn3DMode) || (!shouldEnable3D && isIn3DMode)) {
+        mainContentToggle.click();
+      }
+    }
+  }
+
+  /**
+   * Initialize Voice Settings UI and functionality
+   */
+  function initVoiceSettings() {
+    // Create UI elements if they don't exist
+    if (!DOM.voiceSettingsButton) {
+      createVoiceSettingsUI();
+    }
+
+    // Initialize audio context on first user interaction
+    document.addEventListener('click', function initAudioContext() {
+      if (CONFIG.ENABLE_TTS && !STATE.audioContext) {
+        STATE.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      document.removeEventListener('click', initAudioContext);
+    }, { once: true });
+
+    // Load saved preferences
+    loadVoicePreferences();
+
+    // Attach event listeners
+    attachVoiceSettingsListeners();
+  }
+
+  /**
+   * Load saved voice preferences from localStorage
+   */
+  function loadVoicePreferences() {
+    // Load TTS enabled/disabled preference
+    const savedTTSPref = localStorage.getItem('tts_enabled');
+    if (savedTTSPref !== null) {
+        STATE.ttsEnabled = (savedTTSPref === 'true');
+        if (DOM.voiceToggle) {
+            DOM.voiceToggle.checked = STATE.ttsEnabled;
+        }
+        updateVoiceButtonState();
+    }
+
+    // Load volume preference
+    const savedVolume = localStorage.getItem('tts_volume');
+    if (savedVolume !== null) {
+        CONFIG.TTS_VOLUME = parseFloat(savedVolume);
+        if (DOM.voiceVolume) {
+            DOM.voiceVolume.value = CONFIG.TTS_VOLUME;
+        }
+    }
+  }
+
+  /**
+   * Attach event listeners for voice settings controls
+   */
+  function attachVoiceSettingsListeners() {
+    // Toggle dropdown visibility
+    if (DOM.voiceSettingsButton) {
+        DOM.voiceSettingsButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            DOM.voiceSettingsDropdown.classList.toggle('show');
+            DOM.voiceSettingsButton.classList.toggle('active');
+        });
+    }
+
+    // Handle toggle change
+    if (DOM.voiceToggle) {
+        DOM.voiceToggle.addEventListener('change', function() {
+            STATE.ttsEnabled = DOM.voiceToggle.checked;
+            localStorage.setItem('tts_enabled', STATE.ttsEnabled ? 'true' : 'false');
+            updateVoiceButtonState();
+
+            // If disabling TTS while input is locked, unlock it
+            if (!STATE.ttsEnabled && DOM.userInput && DOM.userInput.disabled) {
+                unlockChatInput();
+            }
+        });
+    }
+
+    // Handle volume change
+    if (DOM.voiceVolume) {
+        DOM.voiceVolume.addEventListener('input', function() {
+            CONFIG.TTS_VOLUME = parseFloat(DOM.voiceVolume.value);
+            localStorage.setItem('tts_volume', CONFIG.TTS_VOLUME.toString());
+        });
+    }
+
+    // Initialize 3D mode toggle
+    initContentModeToggle();
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (DOM.voiceSettingsDropdown &&
+            DOM.voiceSettingsDropdown.classList.contains('show') &&
+            !DOM.voiceSettingsContainer?.contains(e.target)) {
+            DOM.voiceSettingsDropdown.classList.remove('show');
+            if (DOM.voiceSettingsButton) {
+                DOM.voiceSettingsButton.classList.remove('active');
+            }
+        }
+    });
+  }
+
+  /**
+   * Update the visual state of the voice settings button
+   */
+  function updateVoiceButtonState() {
+    if (DOM.voiceSettingsButton) {
+        if (STATE.ttsEnabled) {
+            DOM.voiceSettingsButton.classList.add('voice-enabled');
+            DOM.voiceSettingsButton.setAttribute('aria-pressed', 'true');
+        } else {
+            DOM.voiceSettingsButton.classList.remove('voice-enabled');
+            DOM.voiceSettingsButton.setAttribute('aria-pressed', 'false');
+        }
+    }
+  }
+
+  /**
+   * ==============================
+   * Browser Info Collector Module
+   * ==============================
+   */
+
+  /**
+   * Initialize the browser information collector
+   * Tracks user behavior, device information, and browser details
+   * for fourth-wall breaking experiences
+   */
+  function initBrowserInfoCollector() {
+    const collector = {
+      // Tracking variables
+      lastResizeTime: Date.now(),
+      resizeCount: 0,
+      tabSwitchCount: 0,
+      lastScrollTime: Date.now(),
+      scrollCount: 0,
+      mouseMovements: 0,
+      lastActivityTime: Date.now(),
+      currentTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      browserLanguage: navigator.language || navigator.userLanguage,
+      justResized: false,
+      justReturnedToTab: false,
+      eventHistory: [],
+      deviceData: {
+        userAgent: navigator.userAgent,
+        screenSize: `${window.screen.width}x${window.screen.height}`,
+        windowSize: `${window.innerWidth}x${window.innerHeight}`,
+        browserType: detectBrowserType(),
+        deviceType: detectDeviceType(),
+        hasCamera: false,
+        hasMicrophone: false,
+        colorScheme: detectColorMode(),
+        batteryLevel: null,
+        isCharging: null,
+        tabEstimate: estimateOpenTabs()
+      },
+
+      // Storage for tracking message repetition
+      messageHistory: [],
+
+      // Mentioned observations tracking
+      mentionedObservations: loadMentionedObservations(),
+
+      /**
+       * Handle resize event
+       */
+      handleResize() {
+        this.resizeCount++;
+        this.lastResizeTime = Date.now();
+        this.deviceData.windowSize = `${window.innerWidth}x${window.innerHeight}`;
+        this.lastActivityTime = Date.now();
+        this.justResized = true;
+
+        // Reset the "just resized" flag after 5 seconds
+        clearTimeout(STATE.resizeTimer);
+        STATE.resizeTimer = setTimeout(() => {
+          this.justResized = false;
+        }, 5000);
+
+        // Record event in history
+        this.recordEvent('resize');
+      },
+
+      /**
+       * Handle scroll event
+       */
+      handleScroll() {
+        this.scrollCount++;
+        this.lastScrollTime = Date.now();
+        this.lastActivityTime = Date.now();
+        this.recordEvent('scroll');
+      },
+
+      /**
+       * Record an event in history with timestamp
+       */
+      recordEvent(eventType) {
+        const now = new Date();
+        this.eventHistory.push({
+          type: eventType,
+          timestamp: now.getTime(),
+          formattedTime: now.toLocaleTimeString()
+        });
+
+        // Keep history at a reasonable size
+        if (this.eventHistory.length > 20) {
+          this.eventHistory.shift();
+        }
+      },
+
+      /**
+       * Track messages to detect patterns
+       */
+      trackMessage(message, isUser) {
+        // Limit message history size
+        if (this.messageHistory.length >= 30) {
+          this.messageHistory = this.messageHistory.slice(-29);
+        }
+
+        // Add the new message
+        this.messageHistory.push({
+          text: message,
+          isUser: isUser,
+          timestamp: Date.now()
+        });
+      },
+
+      /**
+       * Mark an observation as mentioned
+       */
+      markAsMentioned(observationType) {
+        if (this.mentionedObservations && observationType) {
+          this.mentionedObservations[observationType] = true;
+          saveMentionedObservations(this.mentionedObservations);
+        }
+      },
+
+      /**
+       * Collect browser information for the AI, avoiding already-mentioned observations
+       */
+      collectBrowserInfo() {
+        // Initialize collection object
+        const browserInfo = {};
+        const eventInfo = {};
+
+        // Track new properties to mention
+        const propsToMention = [];
+
+        // Always prioritize dynamic events regardless of previous mentions
+        if (this.justResized) {
+          eventInfo.justResized = true;
+          eventInfo.windowSize = this.deviceData.windowSize;
+        }
+
+        if (this.justReturnedToTab) {
+          eventInfo.justReturnedToTab = true;
+          eventInfo.tabSwitchCount = this.tabSwitchCount;
+        }
+
+        // For static properties, only include those not mentioned before
+        const staticProps = {
+          browserType: this.deviceData.browserType,
+          deviceType: this.deviceData.deviceType,
+          colorScheme: this.deviceData.colorScheme,
+          batteryLevel: this.deviceData.batteryLevel,
+          isCharging: this.deviceData.isCharging,
+          hasCamera: this.deviceData.hasCamera,
+          hasMicrophone: this.deviceData.hasMicrophone,
+          tabEstimate: this.deviceData.tabEstimate,
+          screenSize: this.deviceData.screenSize
+        };
+
+        // Filter out null/undefined values
+        const validProps = Object.keys(staticProps).filter(key =>
+          staticProps[key] !== null && staticProps[key] !== undefined);
+
+        // First, add any non-mentioned props
+        const nonMentionedProps = validProps.filter(key =>
+          !this.mentionedObservations || !this.mentionedObservations[key]);
+
+        // If we have non-mentioned props, prioritize those
+        if (nonMentionedProps.length > 0) {
+          // Choose 1-2 non-mentioned properties
+          const numToInclude = Math.min(nonMentionedProps.length, Math.floor(Math.random() * 2) + 1);
+          const selectedKeys = nonMentionedProps
+            .sort(() => Math.random() - 0.5)
+            .slice(0, numToInclude);
+
+          selectedKeys.forEach(key => {
+            browserInfo[key] = staticProps[key];
+            propsToMention.push(key);
+          });
+        }
+        // If we don't have non-mentioned props and we want to include details, include some mentioned ones
+        else if (Math.random() < 0.4 && validProps.length > 0) { // 40% chance
+          // Choose 1 property from all valid props, even if mentioned before
+          // But with lower probability
+          if (Math.random() < 0.3) {
+            const key = validProps[Math.floor(Math.random() * validProps.length)];
+            browserInfo[key] = staticProps[key];
+          }
+        }
+
+        // Always include session info (not tracked for repetition)
+        browserInfo.sessionDuration = Math.floor((Date.now() - performance.timing.navigationStart) / 60000);
+        browserInfo.isIdle = STATE.isIdle;
+
+        // Merge event info into browser info
+        Object.assign(browserInfo, eventInfo);
+
+        // Mark the properties as mentioned for future reference
+        propsToMention.forEach(prop => this.markAsMentioned(prop));
+
+        // Include a flag indicating if this info contains newly mentioned properties
+        if (propsToMention.length > 0) {
+          browserInfo._containsNewObservations = true;
+        }
+
+        return browserInfo;
+      }
+    };
+
+    // Initialize device capabilities asynchronously
+    initDeviceCapabilities(collector);
+    checkBatteryStatus(collector);
+
+    return collector;
+  }
+
+  /**
+   * Initialize device capabilities detection (camera, microphone)
+   */
+  function initDeviceCapabilities(collector) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      return;
+    }
+
+    navigator.mediaDevices.enumerateDevices()
+      .then(devices => {
+        collector.deviceData.hasCamera = devices.some(device => device.kind === 'videoinput');
+        collector.deviceData.hasMicrophone = devices.some(device => device.kind === 'audioinput');
+      })
+      .catch(error => {
+        console.log("Could not check media devices:", error);
+      });
+  }
+
+  /**
+   * Check battery status if available
+   */
+  function checkBatteryStatus(collector) {
+    if (!navigator.getBattery) {
+      return;
+    }
+
+    navigator.getBattery()
+      .then(battery => {
+        collector.deviceData.batteryLevel = Math.round(battery.level * 100);
+        collector.deviceData.isCharging = battery.charging;
+
+        // Add listeners for battery changes
+        battery.addEventListener('levelchange', () => {
+          collector.deviceData.batteryLevel = Math.round(battery.level * 100);
+        });
+
+        battery.addEventListener('chargingchange', () => {
+          collector.deviceData.isCharging = battery.charging;
+        });
+      })
+      .catch(error => {
+        console.log("Could not access battery info:", error);
+      });
+  }
+
+  /**
+   * Load previously mentioned observations from localStorage
+   */
+  function loadMentionedObservations() {
+    try {
+      const mentionedData = localStorage.getItem('mentioned_observations');
+      const observations = mentionedData ? JSON.parse(mentionedData) : {
+        browserType: false,
+        deviceType: false,
+        colorScheme: false,
+        batteryLevel: false,
+        isCharging: false,
+        hasCamera: false,
+        hasMicrophone: false,
+        tabEstimate: false,
+        screenSize: false,
+        timezone: false,
+        browserLanguage: false
+      };
+
+      // Add timestamp of last reset if not present
+      if (!observations._lastReset) {
+        observations._lastReset = Date.now();
+        saveMentionedObservations(observations);
+      }
+
+      // Reset mentioned observations after 24 hours to allow re-mentioning
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      if (Date.now() - observations._lastReset > oneDayMs) {
+        resetMentionedObservations(observations);
+      }
+
+      return observations;
+    } catch (e) {
+      console.error("Error loading mentioned observations:", e);
+      return {};
+    }
+  }
+
+  /**
+   * Save mentioned observations to localStorage
+   */
+  function saveMentionedObservations(observations) {
+    try {
+      localStorage.setItem('mentioned_observations', JSON.stringify(observations));
+    } catch (e) {
+      console.error("Error saving mentioned observations:", e);
+    }
+  }
+
+  /**
+   * Reset mentioned observations
+   */
+  function resetMentionedObservations(observations) {
+    const keys = Object.keys(observations);
+    keys.forEach(key => {
+      if (key !== '_lastReset') {
+        observations[key] = false;
+      }
+    });
+    observations._lastReset = Date.now();
+    saveMentionedObservations(observations);
+    return observations;
+  }
+
+  /**
+   * Detect browser type from user agent
+   */
+  function detectBrowserType() {
+    const userAgent = navigator.userAgent;
+
+    if (userAgent.indexOf("Firefox") > -1) {
+      return "Firefox";
+    } else if (userAgent.indexOf("SamsungBrowser") > -1) {
+      return "Samsung Internet";
+    } else if (userAgent.indexOf("Opera") > -1 || userAgent.indexOf("OPR") > -1) {
+      return "Opera";
+    } else if (userAgent.indexOf("Trident") > -1) {
+      return "Internet Explorer";
+    } else if (userAgent.indexOf("Edge") > -1) {
+      return "Microsoft Edge (Legacy)";
+    } else if (userAgent.indexOf("Edg") > -1) {
+      return "Microsoft Edge (Chromium)";
+    } else if (userAgent.indexOf("Chrome") > -1) {
+      return "Chrome";
+    } else if (userAgent.indexOf("Safari") > -1) {
+      return "Safari";
+    } else {
+      return "Unknown";
+    }
+  }
+
+  /**
+   * Detect device type from user agent and window size
+   */
+  function detectDeviceType() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+    // Check for mobile devices
+    if (/android/i.test(userAgent)) {
+      return "Android";
+    }
+
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      return "iOS";
+    }
+
+    // Check for tablet (rough detection)
+    if (/tablet|ipad/i.test(userAgent) || (window.innerWidth >= 768 && window.innerHeight >= 768 && 'ontouchstart' in window)) {
+      return "Tablet";
+    }
+
+    // Default to desktop
+    return "Desktop";
+  }
+
+  /**
+   * Detect dark or light mode
+   */
+  function detectColorMode() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  /**
+   * Estimate number of open tabs based on performance metrics
+   */
+  function estimateOpenTabs() {
+    // This is a rough estimate based on memory usage
+    const memory = performance && performance.memory ? performance.memory.usedJSHeapSize : null;
+    if (!memory) return 'unknown';
+
+    // Very rough estimate
+    return memory < 50000000 ? 'few' : memory < 100000000 ? 'several' : 'many';
+  }
+
+  /**
+   * ==============================
+   * Form Abandonment Detection
+   * ==============================
+   */
+
+  /**
+   * Initialize form abandonment detection
+   * Detects when users start typing then delete their message without sending
+   */
+  function initFormAbandonmentDetection() {
+    if (!DOM.userInput || !DOM.messageForm) return;
+
+    const detector = {
+      typingStarted: false,
+      currentInput: '',
+      maxLength: 0,
+      abandonmentCount: 0,
+      abandonmentThreshold: 20, // Minimum characters typed before considering it abandonment
+      lastCommentTime: 0,
+      commentCooldown: 120000, // 2 minutes cooldown between comments
+
+      // Track input changes
+      handleInput() {
+        this.currentInput = DOM.userInput.value;
+        this.typingStarted = true;
+
+        if (this.currentInput.length > this.maxLength) {
+          this.maxLength = this.currentInput.length;
+        }
+      },
+
+      // Check for abandonment
+      checkAbandonment() {
+        if (this.typingStarted &&
+            this.maxLength > this.abandonmentThreshold &&
+            DOM.userInput.value.length < this.maxLength / 2) {
+
+          this.handleAbandonment(this.maxLength);
+        }
+      },
+
+      // Handle form submission (message sent)
+      handleSubmit() {
+        this.resetTracking();
+      },
+
+      // Reset tracking variables
+      resetTracking() {
+        this.typingStarted = false;
+        this.maxLength = 0;
+        this.currentInput = '';
+      },
+
+      // Process abandonment event
+      handleAbandonment(abandonedLength) {
+        const now = Date.now();
+        if (now - this.lastCommentTime < this.commentCooldown) {
+          this.resetTracking();
+          return;
+        }
+
+        this.abandonmentCount++;
+
+        // Wait a moment to make sure they really abandoned the message
+        setTimeout(() => {
+          // Double check if they actually abandoned the message
+          if (!DOM.userInput || DOM.userInput.value.length >= abandonedLength / 2) {
+            return;
+          }
+
+          // Only trigger AI response 40% of the time to prevent annoyance
+          if (Math.random() < 0.4) {
+            // Collect browser info if enabled
+            let browserInfo = {
+              formAbandonment: true,
+              abandonmentLength: abandonedLength,
+              abandonmentCount: this.abandonmentCount,
+              remainingText: DOM.userInput.value || "completely deleted"
+            };
+
+            if (STATE.browserCollector) {
+              browserInfo = {
+                ...STATE.browserCollector.collectBrowserInfo(),
+                ...browserInfo
+              };
+            }
+
+            // Send info to server for AI response
+            callChatApi({
+              message: "...",
+              user_id: STATE.userId,
+              browserInfo: browserInfo,
+              enable_tts: STATE.ttsEnabled
+            })
+            .then(data => {
+              addMessage(data.message, 'ai', data.timestamp, null, data.message_id);
+              this.lastCommentTime = now;
+            })
+            .catch(error => console.error('Error:', error));
+          }
+
+          this.resetTracking();
+        }, 1500);
+      }
+    };
+
+    // Set up event listeners
+    DOM.userInput.addEventListener('input', () => detector.handleInput());
+    DOM.userInput.addEventListener('change', () => detector.checkAbandonment());
+    DOM.userInput.addEventListener('blur', () => detector.checkAbandonment());
+    DOM.messageForm.addEventListener('submit', () => detector.handleSubmit());
+
+    return detector;
+  }
+
+  /**
+   * ==============================
+   * Text Scramble Effect
+   * ==============================
+   */
+
+  /**
+   * Text Scramble Effect Class
+   * Creates a scrambling text animation effect
+   */
+  class TextScramble {
+    constructor(el) {
+      this.el = el;
+      this.chars = '!<>-_\\/[]{}—=+*^?#________';
+      this.update = this.update.bind(this);
+    }
+
+    setText(newText) {
+      const oldText = this.el.innerText;
+      const length = Math.max(oldText.length, newText.length);
+      const promise = new Promise(resolve => this.resolve = resolve);
+      this.queue = [];
+
+      for (let i = 0; i < length; i++) {
+        const from = oldText[i] || '';
+        const to = newText[i] || '';
+        const start = Math.floor(Math.random() * 40);
+        const end = start + Math.floor(Math.random() * 40);
+        this.queue.push({ from, to, start, end });
+      }
+
+      cancelAnimationFrame(this.frameRequest);
+      this.frame = 0;
+      this.update();
+      return promise;
+    }
+
+    update() {
+      let output = '';
+      let complete = 0;
+
+      for (let i = 0, n = this.queue.length; i < n; i++) {
+        let { from, to, start, end, char } = this.queue[i];
+
+        if (this.frame >= end) {
+          complete++;
+          output += to;
+        } else if (this.frame >= start) {
+          if (!char || Math.random() < 0.28) {
+            char = this.randomChar();
+            this.queue[i].char = char;
+          }
+          output += `<span class="dud">${char}</span>`;
+        } else {
+          output += from;
+        }
+      }
+
+      this.el.innerHTML = output;
+
+      if (complete === this.queue.length) {
+        this.resolve();
+      } else {
+        this.frameRequest = requestAnimationFrame(this.update);
+        this.frame++;
+      }
+    }
+
+    randomChar() {
+      return this.chars[Math.floor(Math.random() * this.chars.length)];
+    }
+  }
+
+  /**
+   * ==============================
+   * Utility Functions
+   * ==============================
+   */
+
+  /**
+   * Debounce function to limit how often a function is called
+   */
+  function debounce(func, wait) {
+    let timeout;
+    return function() {
+      const context = this;
+      const args = arguments;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+  }
+
+  /**
+   * ==============================
+   * Initialize on Page Load
+   * ==============================
+   */
+
+  // Initialize on DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', init);
+
+  // Expose necessary functions to window (for legacy compatibility)
+  window.addMessage = addMessage;
+  window.getUserId = getUserId;
+  window.toggleVoice = function() {
+    if (DOM.voiceToggle) {
+      DOM.voiceToggle.checked = !DOM.voiceToggle.checked;
+      DOM.voiceToggle.dispatchEvent(new Event('change'));
+    }
+  };
+  window.playDirectStreamingAudio = playDirectStreamingAudio;
+
+})();
+    </script>
+
+    <!-- Content Toggle Script -->
+    <script>
+/**
+ * Content Toggle for chat page
+ * Toggles between Spline 3D model and video background
+ */
+(function() {
+    // DOM Elements
+    const contentToggle = document.querySelector('.content-toggle');
+    const contentToggleLabel = document.querySelector('.content-toggle__label');
+    const splineContent = document.querySelector('spline-viewer');
+    const fallbackVideo = document.getElementById('fallback-video');
+
+    // State tracking
+    let isVideoMode = true; // Default to video mode
+
+    // Initialize toggle functionality if elements exist
+    function initToggle() {
+        if (!contentToggle || !splineContent || !fallbackVideo) {
+            console.log('Content toggle missing required elements');
+            return;
+        }
+
+        // Set initial state
+        updateVisibility();
+
+        // Handle toggle click
+        contentToggle.addEventListener('click', function() {
+            // Toggle the state
+            isVideoMode = !isVideoMode;
+
+            // Toggle active class
+            this.classList.toggle('active');
+
+            // Update label text
+            if (contentToggleLabel) {
+                contentToggleLabel.textContent = isVideoMode ? 'Video Mode' : '3D Mode';
+            }
+
+            // Update visibility
+            updateVisibility();
+
+            // Play sound effect if sound is enabled and clickSound exists
+            if (window.audioEnabled && window.clickSound) {
+                window.clickSound.currentTime = 0;
+                window.clickSound.play().catch(e => {
+                    // Silent catch - audio play might fail due to browser policies
+                });
+            }
+        });
+
+        // Add hover sound effects if hover sound exists
+        contentToggle.addEventListener('mouseenter', function() {
+            if (window.audioEnabled && window.hoverSound) {
+                window.hoverSound.currentTime = 0;
+                window.hoverSound.play().catch(e => {
+                    // Silent catch
+                });
+            }
+        });
+
+        // Handle mobile detection
+        handleResponsiveView();
+        window.addEventListener('resize', handleResponsiveView);
+
+        // Load saved preference
+        loadSavedPreference();
+    }
+
+    // Load saved preference from localStorage
+    function loadSavedPreference() {
+        const saved3DMode = localStorage.getItem('3d_mode_enabled');
+        if (saved3DMode !== null) {
+            isVideoMode = saved3DMode !== 'true';
+            contentToggle.classList.toggle('active', !isVideoMode);
+            updateVisibility();
+        }
+    }
+
+    // Update visibility based on current mode
+    function updateVisibility() {
+        if (isVideoMode) {
+            // Show video, hide spline
+            if (fallbackVideo) {
+                fallbackVideo.style.display = 'block';
+                if (fallbackVideo.paused) {
+                    fallbackVideo.play().catch(e => {
+                        console.log('Video autoplay prevented:', e);
+                    });
+                }
+            }
+            if (splineContent) {
+                splineContent.style.display = 'none';
+            }
+
+            // Remove pulse animation if it exists
+            const button = contentToggle.querySelector('.content-toggle__button');
+            if (button) {
+                button.style.animation = '';
+            }
+        } else {
+            // Show spline, hide video
+            if (splineContent) {
+                splineContent.style.display = 'block';
+            }
+            if (fallbackVideo) {
+                fallbackVideo.style.display = 'none';
+                if (!fallbackVideo.paused) {
+                    fallbackVideo.pause();
+                }
+            }
+
+            // Add pulse animation to the button
+            const button = contentToggle.querySelector('.content-toggle__button');
+            if (button) {
+                button.style.animation = 'pulse-subtle 2s infinite';
+            }
+        }
+    }
+
+    // Handle responsive view changes
+    function handleResponsiveView() {
+        // On mobile: always show video if width < 768px
+        if (window.innerWidth < 768) {
+            isVideoMode = true;
+            if (contentToggle) contentToggle.classList.remove('active');
+            if (contentToggleLabel) contentToggleLabel.textContent = 'Video Mode';
+
+            // Show video, hide spline
+            if (fallbackVideo) fallbackVideo.style.display = 'block';
+            if (splineContent) splineContent.style.display = 'none';
+
+            // Hide toggle button on very small screens
+            if (window.innerWidth < 480) {
+                if (contentToggle.parentNode) {
+                    contentToggle.parentNode.style.display = 'none';
+                }
+            } else {
+                if (contentToggle.parentNode) {
+                    contentToggle.parentNode.style.display = 'block';
+                }
+            }
+        } else {
+            // On desktop: respect user preference
+            updateVisibility();
+
+            // Always show toggle on desktop
+            if (contentToggle.parentNode) {
+                contentToggle.parentNode.style.display = 'block';
+            }
+        }
+    }
+
+    // Add subtle pulse animation style if not exists
+    function addPulseAnimation() {
+        if (!document.querySelector('style#pulse-animation')) {
+            const style = document.createElement('style');
+            style.id = 'pulse-animation';
+            style.textContent = `
+                @keyframes pulse-subtle {
+                    0% {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+                    50% {
+                        transform: scale(1.05);
+                        opacity: 0.8;
+                    }
+                    100% {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
+    // Initialize on DOM load
+    document.addEventListener('DOMContentLoaded', function() {
+        addPulseAnimation();
+        initToggle();
+    });
+
+    // Initialize if DOM is already loaded
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        addPulseAnimation();
+        initToggle();
+    }
+})();
+    </script>
+</body>
+</html>
